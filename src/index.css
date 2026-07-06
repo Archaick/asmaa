@@ -3,18 +3,27 @@
 @theme {
   --font-sans: "Tajawal", system-ui, sans-serif;
   --font-serif: "Amiri", "Amiri Quran", serif;
+  --font-display: "Reem Kufi", "Amiri", serif;
 
-  --color-ivory: #FBF7F0;
-  --color-ivory-warm: #F5EFE4;
+  /* Cream / parchment surfaces */
+  --color-cream: #FBF7F0;
+  --color-cream-warm: #F5EFE4;
+  --color-cream-deep: #EDE4D3;
+
+  /* Ink */
   --color-ink: #1F1B16;
   --color-ink-soft: #4A4238;
+  --color-ink-mute: #8A7F6E;
 
-  --color-bouquet-1: #C7522A;
-  --color-bouquet-2: #D9A441;
-  --color-bouquet-3: #6E8B3D;
-  --color-bouquet-4: #3B7A8A;
-  --color-bouquet-5: #6B4A7A;
-  --color-bouquet-6: #A44A5C;
+  /* Logo palette */
+  --color-gold: #B8944E;
+  --color-gold-deep: #8A6E36;
+  --color-gold-soft: #E6D4A6;
+
+  /* Chart's second accent */
+  --color-teal: #2C6E7A;
+  --color-teal-deep: #1F5058;
+  --color-teal-soft: #B9D4D8;
 }
 
 html, body, #root {
@@ -23,8 +32,116 @@ html, body, #root {
 }
 
 body {
-  background: var(--color-ivory);
+  background: var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Home mockup animations ──────────────────────────── */
+
+@keyframes swing-float {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  50%      { transform: translateY(-10px) rotate(-1deg); }
+}
+.animate-swing-float {
+  animation: swing-float 6s ease-in-out infinite;
+}
+
+@keyframes name-unlock {
+  0%, 15%  { background-color: transparent; color: var(--color-ink); border-color: var(--color-cream-deep); }
+  20%, 80% { background-color: var(--color-gold-soft); color: var(--color-ink); border-color: var(--color-gold); }
+  85%, 100%{ background-color: transparent; color: var(--color-ink); border-color: var(--color-cream-deep); }
+}
+.animate-name-unlock {
+  animation: name-unlock 5s infinite;
+}
+
+@keyframes tap-cursor {
+  0%, 10%  { transform: translate(-30px, 30px); opacity: 0; }
+  15%      { opacity: 1; }
+  20%      { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(0, 0) scale(0.8); }
+  30%      { transform: translate(0, 0) scale(1); }
+  40%,100% { transform: translate(-20px, 20px); opacity: 0; }
+}
+.animate-tap-cursor {
+  animation: tap-cursor 5s infinite;
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out both;
+}
+
+/* ── Stage highlight loop (hero pill) ────────────────── */
+
+@keyframes stage-gold {
+  0%, 18%, 100% {
+    background-color: transparent;
+    color: var(--color-ink-mute);
+    transform: scale(1);
+  }
+  25%, 42% {
+    background-color: var(--color-gold-soft);
+    color: var(--color-gold-deep);
+    transform: scale(1.06);
+  }
+  50%, 100% {
+    background-color: transparent;
+    color: var(--color-ink-mute);
+  }
+}
+
+@keyframes stage-teal {
+  0%, 18%, 100% {
+    background-color: transparent;
+    color: var(--color-ink-mute);
+    transform: scale(1);
+  }
+  25%, 42% {
+    background-color: var(--color-teal-soft);
+    color: var(--color-teal-deep);
+    transform: scale(1.06);
+  }
+  50%, 100% {
+    background-color: transparent;
+    color: var(--color-ink-mute);
+  }
+}
+
+.stage-gold {
+  animation: stage-gold 6s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+.stage-teal {
+  animation: stage-teal 6s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+@keyframes stage-arrow {
+  0%, 15%, 100% { opacity: 0.25; transform: translateX(0); }
+  25%, 42%     { opacity: 0.75; transform: translateX(-3px); }
+  50%          { opacity: 0.25; transform: translateX(0); }
+}
+.stage-arrow {
+  animation: stage-arrow 6s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-gold, .stage-teal, .stage-arrow,
+  .animate-swing-float, .animate-name-unlock,
+  .animate-tap-cursor, .animate-gentle-pulse {
+    animation: none;
+  }
 }
