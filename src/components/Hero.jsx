@@ -4,7 +4,7 @@ import ChartMockup from './ChartMockup'
 import TrialTourModal from './TrialTourModal'
 
 export default function Hero() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [tourOpen, setTourOpen] = useState(false)
 
   const openTour = () => setTourOpen(true)
@@ -43,21 +43,21 @@ export default function Hero() {
             >
               {t('journey.s1.title')}
             </span>
-            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '0.25s' }}>←</span>
+            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '0.25s' }}>{lang === 'ar' ? '←' : '→'}</span>
             <span
               className="stage-gold px-2.5 sm:px-3 py-1 rounded-full"
               style={{ animationDelay: '1.5s' }}
             >
               {t('journey.s2.title')}
             </span>
-            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '1.75s' }}>←</span>
+            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '1.75s' }}>{lang === 'ar' ? '←' : '→'}</span>
             <span
               className="stage-teal px-2.5 sm:px-3 py-1 rounded-full"
               style={{ animationDelay: '3s' }}
             >
               {t('journey.s3.title')}
             </span>
-            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '3.25s' }}>←</span>
+            <span className="stage-arrow text-[color:var(--color-ink-mute)]" style={{ animationDelay: '3.25s' }}>{lang === 'ar' ? '←' : '→'}</span>
             <span
               className="stage-teal px-2.5 sm:px-3 py-1 rounded-full"
               style={{ animationDelay: '4.5s' }}
@@ -72,7 +72,7 @@ export default function Hero() {
               className="inline-flex items-center gap-2 px-7 py-4 rounded-full text-lg font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition shadow-lg hover:-translate-y-0.5"
             >
               {t('hero.cta.primary')}
-              <span>←</span>
+              <span>{lang === 'ar' ? '←' : '→'}</span>
             </a>
             <button
               type="button"

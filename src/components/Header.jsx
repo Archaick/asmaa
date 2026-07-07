@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Logo from './Logo'
 import { useLang } from '../i18n/LangContext'
 
 export default function Header() {
@@ -9,7 +8,6 @@ export default function Header() {
   const links = [
     { key: 'nav.home', href: '#' },
     { key: 'nav.memorize', href: '#memorize' },
-    { key: 'nav.academy', href: '#academy' },
     { key: 'nav.library', href: '#library' },
     { key: 'nav.support', href: '#support' },
   ]
@@ -18,7 +16,15 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-[color:var(--color-cream)]/85 backdrop-blur-md border-b border-[color:var(--color-cream-deep)]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <a href="#" className="flex items-center gap-3">
-          <Logo size={44} />
+          <div className="w-12 h-12 rounded-xl bg-white border border-[color:var(--color-cream-deep)] shadow-sm flex items-center justify-center overflow-hidden shrink-0">
+            <img
+              src="/asmaa.jpeg"
+              alt="مشروع أسماء الله الحسنى"
+              width="48"
+              height="48"
+              className="w-full h-full object-contain p-0.5"
+            />
+          </div>
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="font-display text-lg font-bold text-[color:var(--color-ink)]">
               {lang === 'ar' ? 'مشروع أسماء الله الحسنى' : 'The 99 Names of Allah'}

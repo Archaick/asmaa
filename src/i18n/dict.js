@@ -49,7 +49,7 @@ export const dict = {
     'mock.header': 'الباقة الأولى',
     'mock.progress': 'تقدمك',
     'mock.popup.title': 'تمّ الحفظ',
-    'mock.popup.desc': 'الرزاق ✨',
+    'mock.popup.desc': 'السلام ✨',
 
     // Trial tour modal
     'tour.mobile_cta': 'شاهد الوسيلة',
@@ -159,7 +159,7 @@ export const dict = {
     'mock.header': 'Bouquet 1',
     'mock.progress': 'Progress',
     'mock.popup.title': 'Memorized',
-    'mock.popup.desc': 'Ar-Razzaq ✨',
+    'mock.popup.desc': 'As-Salam ✨',
 
     // Trial tour modal
     'tour.mobile_cta': 'See the method',

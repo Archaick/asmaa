@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Tajawal", system-ui, sans-serif;
-  --font-serif: "Amiri", "Amiri Quran", serif;
-  --font-display: "Reem Kufi", "Amiri", serif;
+  --font-sans: "Readex Pro", "Inter", system-ui, sans-serif;
+  --font-serif: "Noto Naskh Arabic", "Readex Pro", serif;
+  --font-display: "Readex Pro", "Inter", system-ui, sans-serif;
 
   /* Cream / parchment surfaces */
   --color-cream: #FBF7F0;
@@ -166,11 +166,122 @@ body {
   animation: star-rotate 40s linear infinite;
 }
 
+/* ── Journey arc-orbit ────────────────────────────────── */
+
+@keyframes bead-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 6px rgba(184,148,78,0.20),
+      0 0 24px 6px rgba(184,148,78,0.55),
+      0 0 40px 10px rgba(184,148,78,0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(184,148,78,0.28),
+      0 0 32px 10px rgba(184,148,78,0.70),
+      0 0 56px 16px rgba(184,148,78,0.45);
+  }
+}
+.tasbih-bead {
+  animation: bead-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-swap {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);   }
+}
+.animate-fade-swap {
+  animation: fade-swap 0.55s ease-out both;
+}
+
+/* ── Journey timeline — sequential spotlight ──────────── */
+
+/* 8s cycle: each badge lit for ~1.6s in its slot, then rests.
+   With delays 0s, 2s, 4s, 6s this reads as ONE badge lit at a time. */
+
+@keyframes badge-focus-gold {
+  0%         { transform: scale(1);
+               box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+               filter: brightness(1) saturate(1); }
+  4%, 22%    { transform: scale(1.18);
+               box-shadow:
+                 0 0 0 16px rgba(184,148,78,0.32),
+                 0 0 44px 10px rgba(184,148,78,0.60),
+                 0 10px 25px rgba(184,148,78,0.35);
+               filter: brightness(1.18) saturate(1.25); }
+  28%, 100%  { transform: scale(1);
+               box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+               filter: brightness(1) saturate(1); }
+}
+.animate-badge-pulse {
+  animation: badge-focus-gold 8s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+@keyframes badge-focus-teal {
+  0%         { transform: scale(1);
+               box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+               filter: brightness(1) saturate(1); }
+  4%, 22%    { transform: scale(1.18);
+               box-shadow:
+                 0 0 0 16px rgba(44,110,122,0.32),
+                 0 0 44px 10px rgba(44,110,122,0.55),
+                 0 10px 25px rgba(44,110,122,0.35);
+               filter: brightness(1.15) saturate(1.25); }
+  28%, 100%  { transform: scale(1);
+               box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+               filter: brightness(1) saturate(1); }
+}
+.animate-badge-pulse-teal {
+  animation: badge-focus-teal 8s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+/* Card lifts subtly when its badge is in the spotlight — the eye
+   picks up two synchronized signals instead of just one. */
+@keyframes stage-card-focus {
+  0%, 28%, 100% { transform: translateY(0); }
+  4%, 22%       { transform: translateY(-4px); }
+}
+.animate-stage-card-focus {
+  animation: stage-card-focus 8s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+/* ── CTA bento polish ──────────────────────────────────── */
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.animate-icon-float {
+  animation: icon-float 3.4s ease-in-out infinite;
+}
+
+@keyframes border-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+.animate-border-shimmer {
+  animation: border-shimmer 1.4s linear;
+}
+
+/* Reveal on scroll — used by useInView-gated elements */
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.reveal-shown {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stage-gold, .stage-teal, .stage-arrow,
   .animate-swing-float, .animate-name-unlock,
   .animate-tap-cursor, .animate-gentle-pulse,
-  .animate-bouquet-bloom, .animate-name-glow, .animate-star-slow {
+  .animate-bouquet-bloom, .animate-name-glow, .animate-star-slow,
+  .animate-badge-pulse, .animate-badge-pulse-teal, .animate-stage-card-focus,
+  .animate-icon-float, .animate-border-shimmer {
     animation: none;
   }
+  .reveal-hidden { opacity: 1; transform: none; }
 }
