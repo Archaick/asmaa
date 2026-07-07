@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAnalytics, isSupported as analyticsSupported } from 'firebase/analytics'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
@@ -16,7 +16,11 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
-export const db = getFirestore(app)
+// Auto-detect long-polling recovers fast when a browser extension (uBlock, Brave
+// shields, etc.) blocks WebChannel. Without this the SDK can hang ~60s per attempt.
+export const db = initializeFirestore(app, {
+  experimentalAutoDetectLongPolling: true,
+})
 export const storage = getStorage(app)
 
 export let analytics = null

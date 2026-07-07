@@ -1,16 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import LoadingOverlay from './LoadingOverlay'
 
 export default function ProtectedRoute({ children, requireRole }) {
   const { user, role, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[color:var(--color-cream)]">
-        <div className="text-[color:var(--color-ink-mute)] text-sm">جارٍ التحميل…</div>
-      </div>
-    )
+    return <LoadingOverlay message="جارٍ التحميل" subtext="لحظات ونصلك إلى صفحتك" />
   }
 
   if (!user) {

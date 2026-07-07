@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import { useAuth } from '../context/AuthContext'
+import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function Login() {
   const { t, lang, toggle } = useLang()
@@ -65,8 +66,16 @@ export default function Login() {
     }
   }
 
+  // Show a loading overlay while:
+  //  - a sign-in call is in flight (busy)
+  //  - or auth has completed but role is still resolving
+  const showOverlay = busy || (user && loading)
+  const overlayMessage = busy ? t('login.busy') : t('login.setup')
+  const overlaySubtext = busy ? '' : t('login.setup_sub')
+
   return (
     <div className="min-h-screen flex flex-col bg-[color:var(--color-cream)]">
+      {showOverlay && <LoadingOverlay message={overlayMessage} subtext={overlaySubtext} />}
       {/* Top bar with logo + home link */}
       <div className="max-w-7xl w-full mx-auto px-5 sm:px-8 py-5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
