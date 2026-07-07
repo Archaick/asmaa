@@ -4,6 +4,7 @@ import HadithBanner from '../components/HadithBanner'
 import Journey from '../components/Journey'
 import CTAGrid from '../components/CTAGrid'
 import Footer from '../components/Footer'
+import { GoldDivider } from '../components/Ornament'
 
 export default function Home() {
   return (
@@ -12,7 +13,9 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <HadithBanner />
+        <GoldDivider />
         <Journey />
+        <GoldDivider />
         <CTAGrid />
       </main>
       <Footer />

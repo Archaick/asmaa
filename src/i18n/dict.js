@@ -10,6 +10,9 @@ export const dict = {
     'nav.lang': 'English',
 
     // Hero
+    'hero.by_sheikh': 'بإشراف الشيخ أيمن أبو طير',
+    'hero.by_sheikh_sub': '١٥ سنة من التدريس والتجريب',
+    'hero.scroll_hint': 'اسحب للمتابعة',
     'hero.eyebrow': 'منظومة تعليمية دعوية تفاعلية',
     'hero.title': 'رحلة معرفة الله تبدأ من أسمائه الحسنى',
     'hero.subtitle': 'ليس المقصود أن تحفظ الأسماء فقط، بل أن تعرف الله بها، وتدعوه بها، وتتعبد بمقتضاها، وتعيش أثرها في حياتك.',
@@ -144,6 +147,9 @@ export const dict = {
     'nav.lang': 'العربية',
 
     // Hero
+    'hero.by_sheikh': 'Guided by Sheikh Ayman Abu Tayr',
+    'hero.by_sheikh_sub': '15 years of teaching and refinement',
+    'hero.scroll_hint': 'Scroll',
     'hero.eyebrow': 'An interactive dawah learning platform',
     'hero.title': 'The journey to know Allah begins with His Beautiful Names',
     'hero.subtitle': 'Not just to memorize the names — but to know Allah through them, call upon Him with them, worship Him by their meanings, and live their impact.',

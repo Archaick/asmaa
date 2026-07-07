@@ -106,21 +106,20 @@ export default function ChartMockup() {
         </div>
       </div>
 
-      {/* Floating success popup */}
+      {/* Success popup — appears in the center right after the cursor tap */}
       <div
-        className="absolute z-30 -bottom-5 left-4 sm:left-8 bg-white rounded-2xl shadow-2xl border border-[color:var(--color-cream-deep)] px-4 py-3 flex items-center gap-3 animate-bounce"
-        style={{ animationDuration: '3s' }}
+        className="absolute z-30 top-1/2 left-1/2 animate-popup-cycle bg-white rounded-2xl shadow-2xl border border-[color:var(--color-gold-soft)] px-5 py-4 flex items-center gap-3 pointer-events-none"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div
-          className="w-11 h-11 rounded-full flex items-center justify-center text-xl shadow-inner"
+          className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner"
           style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
         >
           ✨
         </div>
         <div>
-          <div className="text-sm font-bold text-[color:var(--color-ink)] leading-tight">{t('mock.popup.title')}</div>
-          <div className="text-[11px] text-[color:var(--color-ink-mute)] font-mono uppercase tracking-wider">{t('mock.popup.desc')}</div>
+          <div className="text-base font-bold text-[color:var(--color-ink)] leading-tight">{t('mock.popup.title')}</div>
+          <div className="text-sm text-[color:var(--color-gold-deep)] font-serif font-bold">{t('mock.popup.desc')}</div>
         </div>
       </div>
     </div>
