@@ -58,7 +58,7 @@ export default function Header() {
             {t('nav.lang')}
           </button>
           <a
-            href="#login"
+            href="/login"
             className="hidden sm:inline-flex px-5 py-2 rounded-full text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition"
           >
             {t('nav.login')}
