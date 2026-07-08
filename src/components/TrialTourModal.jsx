@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '../i18n/LangContext'
+import { playChime } from '../utils/chime'
 
 const famousNames = [
   {
@@ -57,6 +58,13 @@ export default function TrialTourModal({ open, onClose }) {
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  // Play affirmation chime when the user reaches the final summary step
+  useEffect(() => {
+    if (open && step === TOTAL - 1) {
+      playChime()
+    }
+  }, [open, step])
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -412,18 +420,9 @@ function StepSummary({ t, lang, onClose }) {
         </div>
       </div>
 
-      <div className="text-xs text-[color:var(--color-ink-mute)] mb-5 font-semibold">
+      <div className="text-xs text-[color:var(--color-ink-mute)] font-semibold">
         {t('tour.s4.by')}
       </div>
-
-      <a
-        href="#memorize"
-        onClick={onClose}
-        className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-base font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition shadow-lg"
-      >
-        {t('tour.s4.cta')}
-        <span>{lang === 'ar' ? '←' : '→'}</span>
-      </a>
     </div>
   )
 }

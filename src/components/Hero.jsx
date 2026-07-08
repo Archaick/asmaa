@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import ChartMockup from './ChartMockup'
 import TrialTourModal from './TrialTourModal'
@@ -67,17 +68,17 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="#memorize"
+            <Link
+              to="/login"
               className="inline-flex items-center gap-2 px-7 py-4 rounded-full text-lg font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition shadow-lg hover:-translate-y-0.5"
             >
               {t('hero.cta.primary')}
               <span>{lang === 'ar' ? '←' : '→'}</span>
-            </a>
+            </Link>
             <button
               type="button"
               onClick={openTour}
-              className="inline-flex items-center gap-2 px-7 py-4 rounded-full text-lg font-semibold bg-transparent border-2 border-[color:var(--color-gold)] text-[color:var(--color-gold-deep)] hover:bg-[color:var(--color-gold-soft)]/50 transition"
+              className="hidden lg:inline-flex items-center gap-2 px-7 py-4 rounded-full text-lg font-semibold bg-transparent border-2 border-[color:var(--color-gold)] text-[color:var(--color-gold-deep)] hover:bg-[color:var(--color-gold-soft)]/50 transition"
             >
               {t('hero.cta.secondary')}
             </button>
