@@ -11,6 +11,9 @@ import Login from './pages/Login'
 
 // Protected pages — lazy so unauthenticated visitors don't download them
 const Memorize            = lazy(() => import('./pages/student/Memorize'))
+const BouquetSession      = lazy(() => import('./pages/student/BouquetSession'))
+const Achievements        = lazy(() => import('./pages/student/Achievements'))
+const Journey             = lazy(() => import('./pages/student/Journey'))
 const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'))
 const AdminStudents       = lazy(() => import('./pages/admin/Students'))
 const AdminStudentDetail  = lazy(() => import('./pages/admin/StudentDetail'))
@@ -29,10 +32,34 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route
-                path="/memorize/*"
+                path="/memorize"
                 element={
                   <ProtectedRoute>
                     <Memorize />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/memorize/:bouquetId"
+                element={
+                  <ProtectedRoute>
+                    <BouquetSession />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/achievements"
+                element={
+                  <ProtectedRoute>
+                    <Achievements />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/journey"
+                element={
+                  <ProtectedRoute>
+                    <Journey />
                   </ProtectedRoute>
                 }
               />
