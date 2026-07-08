@@ -1,73 +1,83 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LangProvider } from './i18n/LangContext'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import LoadingOverlay from './components/LoadingOverlay'
+
+// Public pages — small, load eagerly for fastest first paint
 import Home from './pages/Home'
 import Login from './pages/Login'
-import Memorize from './pages/student/Memorize'
-import AdminDashboard from './pages/admin/Dashboard'
-import AdminStudents from './pages/admin/Students'
-import AdminStudentDetail from './pages/admin/StudentDetail'
-import AdminInbox from './pages/admin/Inbox'
-import AdminContent from './pages/admin/Content'
+
+// Protected pages — lazy so unauthenticated visitors don't download them
+const Memorize            = lazy(() => import('./pages/student/Memorize'))
+const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'))
+const AdminStudents       = lazy(() => import('./pages/admin/Students'))
+const AdminStudentDetail  = lazy(() => import('./pages/admin/StudentDetail'))
+const AdminInbox          = lazy(() => import('./pages/admin/Inbox'))
+const AdminContent        = lazy(() => import('./pages/admin/Content'))
+
+const RouteFallback = <LoadingOverlay message="جارٍ التحميل" />
 
 export default function App() {
   return (
     <LangProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/memorize/*"
-              element={
-                <ProtectedRoute>
-                  <Memorize />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requireRole="admin">
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/students"
-              element={
-                <ProtectedRoute requireRole="admin">
-                  <AdminStudents />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/students/:id"
-              element={
-                <ProtectedRoute requireRole="admin">
-                  <AdminStudentDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/inbox"
-              element={
-                <ProtectedRoute requireRole="admin">
-                  <AdminInbox />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/content"
-              element={
-                <ProtectedRoute requireRole="admin">
-                  <AdminContent />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+          <Suspense fallback={RouteFallback}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/memorize/*"
+                element={
+                  <ProtectedRoute>
+                    <Memorize />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/students"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminStudents />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/students/:id"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminStudentDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/inbox"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminInbox />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/content"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminContent />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </LangProvider>
