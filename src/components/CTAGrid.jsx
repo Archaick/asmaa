@@ -2,8 +2,8 @@ import { useLang } from '../i18n/LangContext'
 import { useInView } from '../hooks/useInView'
 
 const cards = [
-  { key: 'c1', href: '#memorize', icon: '📖', accent: 'gold' },
-  { key: 'c2', href: '#academy',  icon: '🎓', accent: 'teal' },
+  { key: 'c1', href: '/login',    icon: '📖', accent: 'gold' },
+  { key: 'c2', href: '/login',    icon: '🎓', accent: 'teal' },
   { key: 'c3', href: '#library',  icon: '📚', accent: 'gold' },
   { key: 'c4', href: '#support',  icon: '🤝', accent: 'teal' },
 ]

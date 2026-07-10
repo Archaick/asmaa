@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 import { useMilestones } from '../../hooks/useMilestones'
+import { useLang } from '../../i18n/LangContext'
 import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import NameSheet from '../../components/NameSheet'
 import { GoldDivider } from '../../components/Ornament'
@@ -13,6 +14,7 @@ export default function MemorizeOverview() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
   const { byBouquet, findName } = useNames()
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
+  const { t } = useLang()
   const [openId, setOpenId] = useState(null)
   const [openingExp, setOpeningExp] = useState(false)
   const [closingExp, setClosingExp] = useState(false)
@@ -44,14 +46,14 @@ export default function MemorizeOverview() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Opening hadith */}
         <CollapsibleHadith
-          hadith={OPENING_HADITH} label="حديث الافتتاح"
+          hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}
           expanded={openingExp} onToggle={() => setOpeningExp(!openingExp)}
           accent="gold"
         />
 
         {/* Famous 5 names */}
         <NamePillsSection
-          title="الأسماء المشهورة"
+          title={t('memorize.section.famous')}
           names={byBouquet.famous || []}
           memorized={memorized} onOpen={setOpenId}
           variant="famous" accent="gold"
@@ -61,13 +63,13 @@ export default function MemorizeOverview() {
 
         <div className="text-center mb-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-[color:var(--color-gold-deep)] mb-1">
-            الوسيلة
+            {t('memorize.chart_eyebrow')}
           </div>
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-[color:var(--color-ink)]">
-            الباقات الست
+            {t('memorize.section.bouquets_title')}
           </h2>
           <p className="text-sm text-[color:var(--color-ink-soft)] mt-1">
-            اضغط على باقة لتدخلها وتحفظ أسماءها
+            {t('memorize.section.bouquets_hint')}
           </p>
         </div>
 
@@ -90,14 +92,14 @@ export default function MemorizeOverview() {
         <GoldDivider />
 
         <NamePillsSection
-          title="أسماء الختام"
+          title={t('memorize.section.khitam')}
           names={byBouquet.khitam || []}
           memorized={memorized} onOpen={setOpenId}
           variant="row" accent="teal"
         />
 
         <NamePillsSection
-          title="الأدعية الجامعة"
+          title={t('memorize.section.duaa')}
           names={byBouquet.duaa || []}
           memorized={memorized} onOpen={setOpenId}
           variant="dua" accent="gold" isDua
@@ -106,7 +108,7 @@ export default function MemorizeOverview() {
         <GoldDivider />
 
         <CollapsibleHadith
-          hadith={CLOSING_HADITH} label="حديث الاختتام"
+          hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')}
           expanded={closingExp} onToggle={() => setClosingExp(!closingExp)}
           accent="teal"
         />

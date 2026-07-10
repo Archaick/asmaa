@@ -19,7 +19,22 @@ export default function Login() {
 
   useEffect(() => {
     if (!loading && user) {
-      const dest = from || (role === 'admin' ? '/admin' : '/memorize')
+      // Admin always goes to /admin — ignore any stale `from`.
+      // Students: welcome tour takes priority for first-timers, even over `from`.
+      // Otherwise: honor `from` (they were mid-flight), else land on /memorize.
+      let dest
+      if (role === 'admin') {
+        dest = '/admin'
+      } else {
+        const welcomed = (() => { try { return localStorage.getItem('asmaa.welcomed') } catch { return null } })()
+        if (!welcomed) {
+          dest = '/welcome'
+        } else if (from) {
+          dest = from
+        } else {
+          dest = '/memorize'
+        }
+      }
       navigate(dest, { replace: true })
     }
   }, [user, role, loading, from, navigate])

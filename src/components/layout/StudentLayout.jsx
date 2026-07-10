@@ -1,16 +1,20 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useProgress } from '../../hooks/useProgress'
 import { useMilestones } from '../../hooks/useMilestones'
+import { useLang } from '../../i18n/LangContext'
 import { TOTAL_NAMES } from '../../data/bouquets'
 import { playChime, isSoundEnabled, setSoundEnabled } from '../../utils/chime'
-import { useState } from 'react'
 
 export default function StudentLayout({ children, showProgress = false, backTo, leftSlot }) {
   const { user, signOut } = useAuth()
   const { memorizedCount, entries, memorized } = useProgress()
   const { milestones, streak } = useMilestones(entries, memorized, memorizedCount)
+  const { t, lang, toggle: toggleLang } = useLang()
   const [sound, setSound] = useState(() => isSoundEnabled())
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
   const unlocked = milestones.filter((m) => m.unlocked).length
   const pct = Math.round((memorizedCount / TOTAL_NAMES) * 100)
@@ -22,13 +26,28 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
     if (v) playChime()
   }
 
+  // Close menu on outside click / escape
+  useEffect(() => {
+    if (!menuOpen) return
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+    }
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [menuOpen])
+
   return (
-    <div className="min-h-screen bg-[color:var(--color-cream)] flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-[color:var(--color-cream)] flex flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <header className="sticky top-0 z-40 bg-[color:var(--color-cream)]/95 backdrop-blur border-b border-[color:var(--color-cream-deep)]">
         <div className="max-w-5xl mx-auto px-3 sm:px-5">
-          {/* Top row: logo + user actions */}
-          <div className="flex items-center justify-between py-2.5 gap-3">
-            <div className="flex items-center gap-2 min-w-0">
+          {/* Single row: logo · back · nav · avatar */}
+          <div className="flex items-center gap-2 sm:gap-3 py-2.5">
+            <div className="flex items-center gap-2 shrink-0">
               {leftSlot || (
                 <Link to="/" className="flex items-center gap-2 shrink-0">
                   <div className="w-9 h-9 rounded-lg bg-white border border-[color:var(--color-cream-deep)] shadow-sm flex items-center justify-center overflow-hidden">
@@ -39,42 +58,93 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
               {backTo && (
                 <Link
                   to={backTo}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
                 >
-                  → الوسيلة
+                  {lang === 'ar' ? '→' : '←'}
                 </Link>
               )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="hidden md:inline text-xs text-[color:var(--color-ink-soft)] truncate max-w-[140px]">
-                {displayName}
-              </span>
+            {/* Nav tabs — centered, scrolls on mobile if needed */}
+            <nav className="flex-1 flex items-center justify-center gap-1 overflow-x-auto scrollbar-none">
+              <NavTab to="/memorize" icon="🕋" label={t('student.nav.memorize')} end />
+              <NavTab to="/achievements" icon="🏆" label={t('student.nav.achievements')} badge={unlocked ? `${unlocked}/${milestones.length}` : null} />
+              <NavTab to="/journey" icon="🌙" label={t('student.nav.journey')} badge={streak > 0 ? `${streak}` : null} />
+            </nav>
+
+            {/* Avatar + dropdown */}
+            <div className="relative shrink-0" ref={menuRef}>
               <button
-                type="button" onClick={toggleSound}
-                className="w-9 h-9 rounded-full hover:bg-[color:var(--color-cream-warm)] flex items-center justify-center transition"
-                aria-label={sound ? 'إسكات' : 'تشغيل الصوت'}
-              >{sound ? '🔔' : '🔕'}</button>
-              <button
-                type="button" onClick={signOut}
-                className="px-3 py-1.5 rounded-full text-xs font-bold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
-              >خروج</button>
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="flex items-center gap-1 rounded-full hover:ring-2 hover:ring-[color:var(--color-gold-soft)] transition"
+                aria-label={displayName}
+                aria-expanded={menuOpen}
+              >
+                <Avatar name={displayName} photoURL={user?.photoURL} />
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                     className={'text-[color:var(--color-ink-mute)] transition-transform ' + (menuOpen ? 'rotate-180' : '')}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {menuOpen && (
+                <div
+                  className="absolute end-0 mt-2 w-64 bg-white rounded-2xl border border-[color:var(--color-cream-deep)] shadow-xl overflow-hidden animate-fade-in-up"
+                >
+                  {/* Identity */}
+                  <div className="px-4 py-3 border-b border-[color:var(--color-cream-deep)] bg-[color:var(--color-cream-warm)]">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={displayName} photoURL={user?.photoURL} big />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-bold text-[color:var(--color-ink)] truncate">{displayName}</div>
+                        {user?.email && <div className="text-[11px] text-[color:var(--color-ink-mute)] truncate" dir="ltr">{user.email}</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toggles */}
+                  <button
+                    type="button"
+                    onClick={() => { toggleSound() }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm"
+                  >
+                    <span className="text-lg w-6">{sound ? '🔔' : '🔕'}</span>
+                    <span className="flex-1 font-semibold text-[color:var(--color-ink)]">
+                      {sound ? t('student.header.sound_on_aria') : t('student.header.sound_off_aria')}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { toggleLang(); setMenuOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm border-t border-[color:var(--color-cream-deep)]"
+                  >
+                    <span className="text-lg w-6">🌐</span>
+                    <span className="flex-1 font-semibold text-[color:var(--color-ink)]">
+                      {t('nav.lang')}
+                    </span>
+                  </button>
+
+                  {/* Sign out */}
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); signOut() }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-start text-sm border-t border-[color:var(--color-cream-deep)] text-red-700 font-semibold"
+                  >
+                    <span className="text-lg w-6">↩️</span>
+                    <span className="flex-1">{t('student.header.signout')}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Navigation tabs */}
-          <nav className="flex items-center justify-center gap-1 sm:gap-2 pb-2 overflow-x-auto scrollbar-none">
-            <NavTab to="/memorize" icon="🕋" label="الوسيلة" end />
-            <NavTab to="/achievements" icon="🏆" label="الإنجازات" badge={unlocked ? `${unlocked}/${milestones.length}` : null} />
-            <NavTab to="/journey" icon="🌙" label="رحلتي" badge={streak > 0 ? `${streak}` : null} />
-          </nav>
 
           {/* Optional progress bar */}
           {showProgress && (
             <div className="pb-3">
               <div className="flex items-center justify-between mb-1 gap-2">
                 <span className="text-[10px] font-bold text-[color:var(--color-ink-soft)] uppercase tracking-wider">
-                  📿 تقدّمك في الوسيلة
+                  📿 {t('student.header.progress_label')}
                 </span>
                 <span className="text-xs font-bold text-[color:var(--color-ink)]" dir="ltr">
                   {memorizedCount} / {TOTAL_NAMES} · {pct}%
@@ -106,19 +176,46 @@ function NavTab({ to, icon, label, badge, end }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        'inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap ' +
+        'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-sm font-bold transition whitespace-nowrap ' +
         (isActive
           ? 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] shadow-sm'
           : 'text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-cream-warm)] hover:text-[color:var(--color-ink)]')
       }
     >
       <span className="text-base">{icon}</span>
-      <span>{label}</span>
+      <span className="hidden sm:inline">{label}</span>
       {badge && (
-        <span className="ms-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
           {badge}
         </span>
       )}
     </NavLink>
+  )
+}
+
+function Avatar({ name, photoURL, big }) {
+  const size = big ? 'w-10 h-10 text-base' : 'w-9 h-9 text-sm'
+  const initial = (name || '؟').trim()[0] || '؟'
+
+  if (photoURL) {
+    return (
+      <img
+        src={photoURL}
+        alt=""
+        referrerPolicy="no-referrer"
+        className={size + ' rounded-full object-cover shrink-0 border-2 border-[color:var(--color-cream-deep)]'}
+      />
+    )
+  }
+  return (
+    <div
+      className={size + ' rounded-full flex items-center justify-center font-bold shrink-0 border-2 border-[color:var(--color-cream-deep)]'}
+      style={{
+        background: 'linear-gradient(135deg, var(--color-gold-soft), var(--color-gold))',
+        color: 'var(--color-ink)',
+      }}
+    >
+      {initial}
+    </div>
   )
 }

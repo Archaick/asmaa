@@ -1,12 +1,14 @@
 import { useAuth } from '../../context/AuthContext'
 import { useProgress } from '../../hooks/useProgress'
 import { useMilestones } from '../../hooks/useMilestones'
+import { useLang } from '../../i18n/LangContext'
 import { TOTAL_NAMES } from '../../data/bouquets'
 import StudentLayout from '../../components/layout/StudentLayout'
 
 export default function Achievements() {
   const { memorized, memorizedCount, entries } = useProgress()
   const { milestones, streak, uniqueDays, bouquetsDoneCount } = useMilestones(entries, memorized, memorizedCount)
+  const { t } = useLang()
 
   return (
     <StudentLayout>
@@ -14,32 +16,37 @@ export default function Achievements() {
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🏆</div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-[color:var(--color-ink)] mb-2">
-            إنجازاتك
+            {t('achievements.title')}
           </h1>
           <p className="text-[color:var(--color-ink-soft)]">
-            كل خطوة في رحلة الإحصاء أثر يبقى — بارك الله فيك.
+            {t('achievements.subtitle')}
           </p>
         </div>
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-10">
-          <StatCard icon="📿" label="أسماء محفوظة" value={memorizedCount} suffix={`/${TOTAL_NAMES}`} accent="gold" />
-          <StatCard icon="🌙" label="السلسلة الحالية" value={streak}       suffix="يوم"           accent="teal" />
-          <StatCard icon="🕋" label="أيام الوِرد"     value={uniqueDays}    suffix="يوم"           accent="gold" />
-          <StatCard icon="👑" label="باقات مكتملة"   value={bouquetsDoneCount} suffix="من ٦"       accent="teal" />
+          <StatCard icon="📿" label={t('achievements.stat.memorized')} value={memorizedCount} suffix={`/${TOTAL_NAMES}`} accent="gold" />
+          <StatCard icon="🌙" label={t('achievements.stat.streak')}    value={streak}         suffix={t('achievements.stat.streak_unit')} accent="teal" />
+          <StatCard icon="🕋" label={t('achievements.stat.wird_days')} value={uniqueDays}     suffix={t('achievements.stat.wird_unit')}   accent="gold" />
+          <StatCard icon="👑" label={t('achievements.stat.bouquets')}  value={bouquetsDoneCount} suffix={t('achievements.stat.bouquets_of')} accent="teal" />
         </div>
 
         {/* Milestones detailed */}
         <h2 className="font-display text-2xl font-bold text-[color:var(--color-ink)] mb-4 text-center">
-          الإنجازات السبع
+          {t('achievements.milestones_title')}
         </h2>
         <p className="text-center text-sm text-[color:var(--color-ink-soft)] mb-6 max-w-lg mx-auto">
-          كل إنجاز مقصود — لا يُنال إلا بمداومة على الوِرد، وصبر على الحفظ، وحسن التعبد.
+          {t('achievements.milestones_intro')}
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4">
           {milestones.map((m) => (
-            <MilestoneCard key={m.id} milestone={m} progress={progressForMilestone(m, { memorizedCount, streak, uniqueDays })} />
+            <MilestoneCard
+              key={m.id}
+              milestone={m}
+              progress={progressForMilestone(m, { memorizedCount, streak, uniqueDays })}
+              t={t}
+            />
           ))}
         </div>
       </div>
@@ -72,8 +79,8 @@ function StatCard({ icon, label, value, suffix, accent }) {
   )
 }
 
-function MilestoneCard({ milestone, progress }) {
-  const { unlocked, icon, label, desc } = milestone
+function MilestoneCard({ milestone, progress, t }) {
+  const { unlocked, icon, id } = milestone
   return (
     <div
       className={
@@ -98,10 +105,14 @@ function MilestoneCard({ milestone, progress }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-display font-bold text-lg text-[color:var(--color-ink)]">{label}</h3>
-            {unlocked && <span className="text-xs text-[color:var(--color-gold-deep)] font-bold">✓ مُحقَّق</span>}
+            <h3 className="font-display font-bold text-lg text-[color:var(--color-ink)]">
+              {t(`milestone.${id}.label`)}
+            </h3>
+            {unlocked && <span className="text-xs text-[color:var(--color-gold-deep)] font-bold">{t('achievements.unlocked')}</span>}
           </div>
-          <p className="text-sm text-[color:var(--color-ink-soft)] leading-relaxed mb-2">{desc}</p>
+          <p className="text-sm text-[color:var(--color-ink-soft)] leading-relaxed mb-2">
+            {t(`milestone.${id}.desc`)}
+          </p>
           {progress && !unlocked && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-[11px] font-bold text-[color:var(--color-ink-mute)] mb-1" dir="ltr">

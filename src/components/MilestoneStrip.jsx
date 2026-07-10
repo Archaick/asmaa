@@ -1,20 +1,23 @@
+import { useLang } from '../i18n/LangContext'
+
 export default function MilestoneStrip({ milestones, streak }) {
+  const { t } = useLang()
   return (
     <section className="mt-8 p-5 sm:p-6 rounded-3xl bg-white border border-[color:var(--color-cream-deep)]">
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-widest text-[color:var(--color-gold-deep)] mb-0.5">
-            رحلتك
+            {t('student.nav.journey')}
           </div>
           <h3 className="font-display text-lg font-bold text-[color:var(--color-ink)]">
-            🏆 إنجازاتك
+            🏆 {t('achievements.title')}
           </h3>
         </div>
         {streak > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--color-gold-soft)]">
             <span className="text-lg">🌙</span>
             <span className="text-sm font-bold text-[color:var(--color-ink)]" dir="ltr">
-              {streak} يوم
+              {streak} {t('achievements.stat.streak_unit')}
             </span>
           </div>
         )}
@@ -24,7 +27,7 @@ export default function MilestoneStrip({ milestones, streak }) {
         {milestones.map((m) => (
           <div
             key={m.id}
-            title={m.desc}
+            title={t(`milestone.${m.id}.desc`)}
             className={
               'flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ' +
               (m.unlocked
@@ -36,7 +39,7 @@ export default function MilestoneStrip({ milestones, streak }) {
               {m.icon}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-center text-[color:var(--color-ink)] leading-tight">
-              {m.label}
+              {t(`milestone.${m.id}.label`)}
             </span>
           </div>
         ))}

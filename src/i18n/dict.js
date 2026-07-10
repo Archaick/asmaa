@@ -16,7 +16,7 @@ export const dict = {
     'hero.eyebrow': 'منظومة تعليمية دعوية تفاعلية',
     'hero.title': 'رحلة معرفة الله تبدأ من أسمائه الحسنى',
     'hero.subtitle': 'ليس المقصود أن تحفظ الأسماء فقط، بل أن تعرف الله بها، وتدعوه بها، وتتعبد بمقتضاها، وتعيش أثرها في حياتك.',
-    'hero.cta.primary': 'ابدأ الحفظ الآن',
+    'hero.cta.primary': 'أنشئ حساباً وابدأ',
     'hero.cta.secondary': 'شاهد الوسيلة',
 
     // Journey (4 stages)
@@ -136,6 +136,139 @@ export const dict = {
     'login.err.network': 'تعذر الاتصال بالشبكة',
     'login.err.fields': 'أدخل البريد وكلمة المرور',
     'login.err.generic': 'حدث خطأ، جرّب مجددًا',
+
+    // Student platform — layout / nav
+    'student.nav.memorize': 'الوسيلة',
+    'student.nav.achievements': 'الإنجازات',
+    'student.nav.journey': 'رحلتي',
+    'student.header.progress_label': 'تقدّمك في الوسيلة',
+    'student.header.sound_on_aria': 'إسكات',
+    'student.header.sound_off_aria': 'تشغيل الصوت',
+    'student.header.signout': 'خروج',
+    'student.header.back_short': 'الوسيلة',
+
+    // Memorize overview
+    'memorize.section.famous': 'الأسماء المشهورة',
+    'memorize.section.khitam': 'أسماء الختام',
+    'memorize.section.duaa': 'الأدعية الجامعة',
+    'memorize.section.bouquets_title': 'الباقات الست',
+    'memorize.section.bouquets_hint': 'اضغط على باقة لتدخلها وتحفظ أسماءها',
+    'memorize.hadith.opening_label': 'حديث الافتتاح',
+    'memorize.hadith.closing_label': 'حديث الاختتام',
+    'memorize.chart_eyebrow': 'الوسيلة',
+
+    // Bouquet tile / session
+    'bouquet.tag': 'الباقة',
+    'bouquet.tag_dua': 'أدعية',
+    'bouquet.tile.start': 'ابدأ',
+    'bouquet.tile.continue': 'متابعة',
+    'bouquet.tile.review': 'مراجعة',
+    'bouquet.tile.complete_hint': 'مكتملة',
+    'bouquet.divider.you_allah': 'أنتَ الله',
+    'bouquet.nav.prev_label': 'الباقة السابقة',
+    'bouquet.nav.next_label': 'الباقة التالية',
+    'bouquet.not_found': 'لم نجد هذه الباقة',
+    'bouquet.back_to_chart': 'عودة للوسيلة',
+    'bouquet.session.complete_badge': '👑 مكتملة',
+
+    // NameSheet
+    'name.acts.meaning': 'المعنى',
+    'name.acts.thanaa': 'الثناء',
+    'name.acts.talab': 'الطلب',
+    'name.badge.memorized': '✅ محفوظ',
+    'name.badge.dua': '🤲 دعاء',
+    'name.badge.name': 'اسم',
+    'name.action.memorize': '✅ حفظت هذا الاسم',
+    'name.action.unmemorize': '↩️ إلغاء العلامة',
+    'name.nav.prev': '→ السابق',
+    'name.nav.next': 'التالي ←',
+    'name.sheet.close_aria': 'إغلاق',
+
+    // Achievements page
+    'achievements.title': 'إنجازاتك',
+    'achievements.subtitle': 'كل خطوة في رحلة الإحصاء أثر يبقى — بارك الله فيك.',
+    'achievements.stat.memorized': 'أسماء محفوظة',
+    'achievements.stat.streak': 'السلسلة الحالية',
+    'achievements.stat.streak_unit': 'يوم',
+    'achievements.stat.wird_days': 'أيام الوِرد',
+    'achievements.stat.wird_unit': 'يوم',
+    'achievements.stat.bouquets': 'باقات مكتملة',
+    'achievements.stat.bouquets_of': 'من ٦',
+    'achievements.milestones_title': 'الإنجازات السبع',
+    'achievements.milestones_intro': 'كل إنجاز مقصود — لا يُنال إلا بمداومة على الوِرد، وصبر على الحفظ، وحسن التعبد.',
+    'achievements.unlocked': '✓ مُحقَّق',
+
+    // Milestone labels + descriptions
+    'milestone.first-name.label': 'أول اسم',
+    'milestone.first-name.desc': 'حفظت أول اسم من أسماء الله',
+    'milestone.famous.label': 'الأسماء المشهورة',
+    'milestone.famous.desc': 'أتممت الأسماء الخمسة المشهورة',
+    'milestone.first-bouquet.label': 'أول باقة',
+    'milestone.first-bouquet.desc': 'أتممت باقة كاملة',
+    'milestone.halfway.label': 'نصف الطريق',
+    'milestone.halfway.desc': 'حفظت ٥٠ اسماً',
+    'milestone.week-streak.label': 'وِرد الأسبوع',
+    'milestone.week-streak.desc': 'وِرد يومي لسبعة أيام',
+    'milestone.complete.label': 'الوسيلة كاملة',
+    'milestone.complete.desc': 'أحصيت التسع والتسعين',
+    'milestone.ninety-days.label': 'الوِرد التسعوني',
+    'milestone.ninety-days.desc': '٩٩ يوماً من الوِرد',
+
+    // Journey page
+    'journey.title': 'رحلتي',
+    'journey.subtitle': 'تأمّل مسيرتك مع أسماء الله — أين بدأت، وأين وصلت.',
+    'journey.streak_prompt_new': 'ابدأ سلسلتك اليوم',
+    'journey.streak_ongoing': 'يوم متتالٍ في وِردك',
+    'journey.total_days_label': 'إجمالي أيام الوِرد',
+    'journey.bouquet_progress_title': 'تقدّمك في الباقات',
+    'journey.recent_title': 'آخر ما حفظت',
+    'journey.empty': 'لم تحفظ أي اسم بعد — ابدأ من الوسيلة',
+    'journey.time.now': 'اليوم',
+    'journey.time.hours_short': 'س',
+    'journey.time.days_short': 'يوم',
+    'journey.time.ago_prefix': 'منذ',
+    'journey.time.none': '—',
+
+    // Celebration
+    'celebration.bouquet_complete_prefix': '🌟 أتممت باقة',
+    'celebration.subtitle': 'بارك الله فيك — كل اسم حفظته دعوة استجيبت',
+    'celebration.tap_to_close': 'اضغط للإغلاق',
+
+    // Loading / errors
+    'loading.default': 'جارٍ التحميل',
+    'loading.default_sub': 'لحظات ونصلك إلى صفحتك',
+
+    // Welcome tour (first-time student onboarding)
+    'welcome.skip': 'تخطّي',
+    'welcome.back': 'السابق',
+    'welcome.next': 'التالي',
+    'welcome.start': 'ابدأ الرحلة',
+
+    'welcome.s1.title': 'أهلاً بك في رحلتك مع أسماء الله',
+    'welcome.s1.subtitle': 'منظومة تنقلك من الحفظ إلى الفهم إلى الدعاء إلى التعبد',
+    'welcome.s1.desc': 'ليس المقصود أن تحفظ الأسماء فقط، بل أن تعرف الله بها، وتدعوه بها، وتعيش أثرها في قلبك.',
+
+    'welcome.s2.title': 'وسيلة الشيخ أيمن أبو طير',
+    'welcome.s2.subtitle': 'منظومة نضجت على أكثر من ١٥ سنة من التدريس والتجريب',
+    'welcome.s2.desc': 'الأسماء التسع والتسعون مرتّبة في ست باقات ملوّنة، تُفتتح بشهادة أنس، وتُختتم بحديث ابن مسعود — فيصير حفظك عبادةً كاملة.',
+    'welcome.s2.hadith_open_label': 'حديث الافتتاح',
+    'welcome.s2.hadith_close_label': 'حديث الختام',
+    'welcome.s2.bouquets_label': 'ست باقات · ٩٠ اسماً',
+
+    'welcome.s3.title': 'كل اسم يفتح على أربعة أبواب',
+    'welcome.s3.subtitle': 'اضغط على اسم لتكتشف معناه ودعاءه',
+    'welcome.s3.desc': 'الأربعة الأبواب هي: لفظ الاسم، ومعناه، والثناء به على الله، والدعاء به.',
+    'welcome.s3.act_meaning': 'المعنى',
+    'welcome.s3.act_thanaa': 'الثناء',
+    'welcome.s3.act_talab': 'الطلب',
+    'welcome.s3.act_memorize': 'حفظت',
+
+    'welcome.s4.title': 'رحلتك تبدأ اليوم',
+    'welcome.s4.subtitle': 'احفظ اسماً كل يوم، وشاهد سلسلتك تنمو',
+    'welcome.s4.desc': 'كل اسم تحفظه يُضيء نصيبه من الوسيلة أمام عينيك، وسبع إنجازات مقدسة تنتظرك على طريقك.',
+    'welcome.s4.badge_streak': 'سلسلة يومية',
+    'welcome.s4.badge_milestones': '٧ إنجازات مقدسة',
+    'welcome.s4.badge_chart': 'وسيلتك تُضيء',
   },
 
   en: {
@@ -155,7 +288,7 @@ export const dict = {
     'hero.eyebrow': 'An interactive dawah learning platform',
     'hero.title': 'The journey to know Allah begins with His Beautiful Names',
     'hero.subtitle': 'Not just to memorize the names — but to know Allah through them, call upon Him with them, worship Him by their meanings, and live their impact.',
-    'hero.cta.primary': 'Start memorizing',
+    'hero.cta.primary': 'Create an account',
     'hero.cta.secondary': 'See the method',
 
     // Journey
@@ -275,5 +408,138 @@ export const dict = {
     'login.err.network': "Couldn't reach the network",
     'login.err.fields': 'Enter both email and password',
     'login.err.generic': 'Something went wrong, try again',
+
+    // Student platform — layout / nav
+    'student.nav.memorize': 'The Method',
+    'student.nav.achievements': 'Achievements',
+    'student.nav.journey': 'My Journey',
+    'student.header.progress_label': 'Your progress',
+    'student.header.sound_on_aria': 'Mute',
+    'student.header.sound_off_aria': 'Unmute',
+    'student.header.signout': 'Sign out',
+    'student.header.back_short': 'Method',
+
+    // Memorize overview
+    'memorize.section.famous': 'The Famous Names',
+    'memorize.section.khitam': 'The Closing Names',
+    'memorize.section.duaa': 'Comprehensive Supplications',
+    'memorize.section.bouquets_title': 'The Six Bouquets',
+    'memorize.section.bouquets_hint': 'Tap a bouquet to enter and memorize its names',
+    'memorize.hadith.opening_label': 'Opening Hadith',
+    'memorize.hadith.closing_label': 'Closing Hadith',
+    'memorize.chart_eyebrow': 'The Method',
+
+    // Bouquet tile / session
+    'bouquet.tag': 'Bouquet',
+    'bouquet.tag_dua': 'Supplications',
+    'bouquet.tile.start': 'Start',
+    'bouquet.tile.continue': 'Continue',
+    'bouquet.tile.review': 'Review',
+    'bouquet.tile.complete_hint': 'Complete',
+    'bouquet.divider.you_allah': 'You are Allah',
+    'bouquet.nav.prev_label': 'Previous bouquet',
+    'bouquet.nav.next_label': 'Next bouquet',
+    'bouquet.not_found': 'This bouquet was not found',
+    'bouquet.back_to_chart': 'Back to the Method',
+    'bouquet.session.complete_badge': '👑 Complete',
+
+    // NameSheet
+    'name.acts.meaning': 'Meaning',
+    'name.acts.thanaa': 'Praise',
+    'name.acts.talab': 'Supplication',
+    'name.badge.memorized': '✅ Memorized',
+    'name.badge.dua': '🤲 Prayer',
+    'name.badge.name': 'Name',
+    'name.action.memorize': '✅ I memorized this name',
+    'name.action.unmemorize': '↩️ Unmark',
+    'name.nav.prev': '← Previous',
+    'name.nav.next': 'Next →',
+    'name.sheet.close_aria': 'Close',
+
+    // Achievements page
+    'achievements.title': 'Your Achievements',
+    'achievements.subtitle': 'Every step in the journey of ihsaa leaves a trace — may Allah bless you.',
+    'achievements.stat.memorized': 'Names memorized',
+    'achievements.stat.streak': 'Current streak',
+    'achievements.stat.streak_unit': 'days',
+    'achievements.stat.wird_days': 'Wird days',
+    'achievements.stat.wird_unit': 'days',
+    'achievements.stat.bouquets': 'Bouquets complete',
+    'achievements.stat.bouquets_of': '/ 6',
+    'achievements.milestones_title': 'The Seven Milestones',
+    'achievements.milestones_intro': 'Each milestone is intentional — earned only through consistent wird, patience with memorization, and true worship.',
+    'achievements.unlocked': '✓ Achieved',
+
+    // Milestone labels + descriptions
+    'milestone.first-name.label': 'First Name',
+    'milestone.first-name.desc': 'You memorized your first name of Allah',
+    'milestone.famous.label': 'The Famous Names',
+    'milestone.famous.desc': 'You completed the five famous names',
+    'milestone.first-bouquet.label': 'First Bouquet',
+    'milestone.first-bouquet.desc': 'You completed a full bouquet',
+    'milestone.halfway.label': 'Halfway There',
+    'milestone.halfway.desc': 'You memorized 50 names',
+    'milestone.week-streak.label': 'Weekly Wird',
+    'milestone.week-streak.desc': 'Seven consecutive days of daily wird',
+    'milestone.complete.label': 'The Whole Method',
+    'milestone.complete.desc': 'You have counted all ninety-nine',
+    'milestone.ninety-days.label': 'The Ninety-Nine Wird',
+    'milestone.ninety-days.desc': '99 days of wird',
+
+    // Journey page
+    'journey.title': 'My Journey',
+    'journey.subtitle': "Reflect on your walk with the names of Allah — where you began, and how far you've come.",
+    'journey.streak_prompt_new': 'Start your streak today',
+    'journey.streak_ongoing': 'consecutive days of wird',
+    'journey.total_days_label': 'Total wird days',
+    'journey.bouquet_progress_title': 'Your bouquet progress',
+    'journey.recent_title': 'Recently memorized',
+    'journey.empty': "You haven't memorized any name yet — start from the Method",
+    'journey.time.now': 'Today',
+    'journey.time.hours_short': 'h',
+    'journey.time.days_short': 'd',
+    'journey.time.ago_prefix': '',
+    'journey.time.none': '—',
+
+    // Celebration
+    'celebration.bouquet_complete_prefix': '🌟 You completed',
+    'celebration.subtitle': 'May Allah bless you — every name you memorized is a prayer answered',
+    'celebration.tap_to_close': 'Tap to close',
+
+    // Loading / errors
+    'loading.default': 'Loading',
+    'loading.default_sub': "A moment while we get you to your page",
+
+    // Welcome tour (first-time student onboarding)
+    'welcome.skip': 'Skip',
+    'welcome.back': 'Back',
+    'welcome.next': 'Next',
+    'welcome.start': 'Begin the journey',
+
+    'welcome.s1.title': 'Welcome to your journey with the names of Allah',
+    'welcome.s1.subtitle': 'A path from memorizing → understanding → prayer → living',
+    'welcome.s1.desc': "Not just to memorize the names — but to know Allah through them, call upon Him with them, and live their impact in your heart.",
+
+    'welcome.s2.title': 'Sheikh Ayman Abu Tayr\'s Method',
+    'welcome.s2.subtitle': 'Refined over 15+ years of teaching and testing',
+    'welcome.s2.desc': "The 99 names are arranged into six colored bouquets, opened with the hadith of Anas and closed with the hadith of Ibn Mas'ud — so your memorization becomes a complete act of worship.",
+    'welcome.s2.hadith_open_label': 'Opening',
+    'welcome.s2.hadith_close_label': 'Closing',
+    'welcome.s2.bouquets_label': 'Six bouquets · 90 names',
+
+    'welcome.s3.title': 'Every name opens onto four doors',
+    'welcome.s3.subtitle': 'Tap a name to discover its meaning and its prayers',
+    'welcome.s3.desc': 'The four doors are: the utterance, the meaning, the praise, and the supplication.',
+    'welcome.s3.act_meaning': 'Meaning',
+    'welcome.s3.act_thanaa': 'Praise',
+    'welcome.s3.act_talab': 'Supplication',
+    'welcome.s3.act_memorize': 'Memorized',
+
+    'welcome.s4.title': 'Your journey begins today',
+    'welcome.s4.subtitle': 'Memorize one name a day, and watch your streak grow',
+    'welcome.s4.desc': 'Every name you memorize lights its portion of the chart before your eyes — seven sacred milestones await you on this path.',
+    'welcome.s4.badge_streak': 'Daily streak',
+    'welcome.s4.badge_milestones': '7 sacred milestones',
+    'welcome.s4.badge_chart': 'Your chart illuminates',
   },
 }

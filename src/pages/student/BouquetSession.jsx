@@ -8,6 +8,7 @@ import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH, TOTAL_NAMES } from '../../dat
 import NameSheet from '../../components/NameSheet'
 import CelebrationOverlay from '../../components/CelebrationOverlay'
 import StudentLayout from '../../components/layout/StudentLayout'
+import { useLang } from '../../i18n/LangContext'
 import { playChime, playMilestoneChime } from '../../utils/chime'
 
 const SEEN_KEY = 'asmaa.celebrated'
@@ -18,11 +19,25 @@ export default function BouquetSession() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
   const { byBouquet, findName } = useNames()
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
+  const { t } = useLang()
+
   const [openId, setOpenId] = useState(null)
   const [openingExp, setOpeningExp] = useState(false)
   const [closingExp, setClosingExp] = useState(false)
   const [celebrated, setCelebrated] = useState(null)
   const prevCompleteRef = useRef({})
+
+  // Ceremonial reveal on every bouquet visit:
+  //   - opening hadith fades in first
+  //   - names grid staggers in
+  //   - closing hadith fades in last
+  useEffect(() => {
+    setOpeningExp(false)
+    setClosingExp(false)
+    const t1 = setTimeout(() => setOpeningExp(true), 150)
+    const t2 = setTimeout(() => setClosingExp(true), 1350)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [bouquetId])
 
   const bouquet = BOUQUETS.find((b) => b.id === bouquetId)
   const names = byBouquet[bouquetId] || []
@@ -77,8 +92,8 @@ export default function BouquetSession() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[color:var(--color-cream)]">
         <div className="text-center">
-          <p className="mb-4">لم نجد هذه الباقة.</p>
-          <Link to="/memorize" className="text-[color:var(--color-gold-deep)] font-bold">← عودة للوسيلة</Link>
+          <p className="mb-4">{t('bouquet.not_found')}</p>
+          <Link to="/memorize" className="text-[color:var(--color-gold-deep)] font-bold">← {t('bouquet.back_to_chart')}</Link>
         </div>
       </div>
     )
@@ -99,7 +114,7 @@ export default function BouquetSession() {
                 color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
               }}
             >
-              الباقة {complete ? '👑 مكتملة' : ''}
+              {t('bouquet.tag')} {complete ? t('bouquet.session.complete_badge') : ''}
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-[color:var(--color-ink)] mt-2 mb-3">
               {bouquet.title}
@@ -125,7 +140,7 @@ export default function BouquetSession() {
 
           {/* Opening hadith (collapsed) */}
           <CollapsibleHadith
-            hadith={OPENING_HADITH} label="حديث الافتتاح"
+            hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}
             expanded={openingExp} onToggle={() => setOpeningExp(!openingExp)}
             accent="gold"
           />
@@ -140,13 +155,13 @@ export default function BouquetSession() {
                   color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
                 }}
               >
-                أنتَ الله
+                {t('bouquet.divider.you_allah')}
               </span>
             </div>
           )}
 
-          {/* Big spacious names grid */}
-          <div className={gridClassFor(bouquet)} dir="rtl">
+          {/* Big spacious names grid — staggered reveal after opening hadith */}
+          <div key={`grid-${bouquetId}`} className={gridClassFor(bouquet)} dir="rtl">
             {names.map((n, i) => {
               const isMem = memorized.has(n.id)
               return (
@@ -162,7 +177,7 @@ export default function BouquetSession() {
                           : 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]')
                       : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:-translate-y-1 hover:shadow-md')
                   }
-                  style={{ animationDelay: `${i * 30}ms` }}
+                  style={{ animationDelay: `${500 + i * 50}ms` }}
                 >
                   {n.name}
                   {isMem && <span className="absolute top-1.5 end-2 text-sm">✓</span>}
@@ -174,7 +189,7 @@ export default function BouquetSession() {
           {/* Closing hadith (collapsed) */}
           <div className="mt-6">
             <CollapsibleHadith
-              hadith={CLOSING_HADITH} label="حديث الاختتام"
+              hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')}
               expanded={closingExp} onToggle={() => setClosingExp(!closingExp)}
               accent="teal"
             />
@@ -188,7 +203,7 @@ export default function BouquetSession() {
                 className="flex-1 max-w-xs px-4 py-3 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition text-start"
               >
                 <div className="text-[10px] font-bold text-[color:var(--color-ink-mute)] uppercase tracking-wider mb-0.5">
-                  → الباقة السابقة
+                  → {t('bouquet.nav.prev_label')}
                 </div>
                 <div className="text-sm font-bold text-[color:var(--color-ink)] truncate">{prev.title}</div>
               </Link>
@@ -200,7 +215,7 @@ export default function BouquetSession() {
                 className="flex-1 max-w-xs px-4 py-3 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition text-end"
               >
                 <div className="text-[10px] font-bold text-[color:var(--color-ink-mute)] uppercase tracking-wider mb-0.5">
-                  الباقة التالية ←
+                  {t('bouquet.nav.next_label')} ←
                 </div>
                 <div className="text-sm font-bold text-[color:var(--color-ink)] truncate">{next.title}</div>
               </Link>
@@ -219,8 +234,7 @@ export default function BouquetSession() {
 
       <CelebrationOverlay
         open={!!celebrated}
-        title={celebrated ? `🌟 أتممت باقة ${celebrated.title}` : ''}
-        subtitle="بارك الله فيك — كل اسم حفظته دعوة استجيبت"
+        bouquetTitle={celebrated?.title || ''}
         onClose={() => setCelebrated(null)}
       />
     </StudentLayout>

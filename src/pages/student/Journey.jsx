@@ -3,29 +3,27 @@ import StudentLayout from '../../components/layout/StudentLayout'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 import { useMilestones } from '../../hooks/useMilestones'
-import { BOUQUETS, TOTAL_NAMES } from '../../data/bouquets'
-
-function tsMs(ts) {
-  if (!ts) return 0
-  if (ts.toMillis) return ts.toMillis()
-  if (ts.seconds) return ts.seconds * 1000
-  return 0
-}
-
-function fmtRelative(ms) {
-  if (!ms) return '—'
-  const diff = Date.now() - ms
-  const min = 60_000, hr = 60 * min, day = 24 * hr
-  if (diff < hr)       return 'اليوم'
-  if (diff < day)      return `منذ ${Math.floor(diff / hr)} س`
-  if (diff < 30 * day) return `منذ ${Math.floor(diff / day)} يوم`
-  return new Date(ms).toLocaleDateString('ar-EG')
-}
+import { useLang } from '../../i18n/LangContext'
+import { BOUQUETS } from '../../data/bouquets'
+import { tsMs } from '../../utils/milestones'
 
 export default function Journey() {
   const { memorized, memorizedCount, entries } = useProgress()
   const { byBouquet, findName } = useNames()
   const { streak, uniqueDays } = useMilestones(entries, memorized, memorizedCount)
+  const { t, lang } = useLang()
+
+  function fmtRelative(ms) {
+    if (!ms) return t('journey.time.none')
+    const diff = Date.now() - ms
+    const min = 60_000, hr = 60 * min, day = 24 * hr
+    if (diff < hr)       return t('journey.time.now')
+    const prefix = t('journey.time.ago_prefix')
+    const sep = prefix ? ' ' : ''
+    if (diff < day)      return `${prefix}${sep}${Math.floor(diff / hr)} ${t('journey.time.hours_short')}`.trim()
+    if (diff < 30 * day) return `${prefix}${sep}${Math.floor(diff / day)} ${t('journey.time.days_short')}`.trim()
+    return new Date(ms).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')
+  }
 
   const recent = useMemo(() => {
     return [...entries]
@@ -42,10 +40,10 @@ export default function Journey() {
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🌙</div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-[color:var(--color-ink)] mb-2">
-            رحلتي
+            {t('journey.title')}
           </h1>
           <p className="text-[color:var(--color-ink-soft)]">
-            تأمّل مسيرتك مع أسماء الله — أين بدأت، وأين وصلت.
+            {t('journey.subtitle')}
           </p>
         </div>
 
@@ -57,11 +55,11 @@ export default function Journey() {
             <div className="text-4xl mb-2">🌙</div>
             <div className="font-display text-5xl font-bold text-[color:var(--color-ink)]" dir="ltr">{streak}</div>
             <div className="text-sm font-bold text-[color:var(--color-ink-soft)] mt-1">
-              {streak === 0 ? 'ابدأ سلسلتك اليوم' : `يوم متتالٍ في وِردك`}
+              {streak === 0 ? t('journey.streak_prompt_new') : t('journey.streak_ongoing')}
             </div>
             {uniqueDays > 0 && (
               <div className="text-xs text-[color:var(--color-ink-mute)] mt-3">
-                إجمالي أيام الوِرد: <span dir="ltr" className="font-bold">{uniqueDays}</span>
+                {t('journey.total_days_label')}: <span dir="ltr" className="font-bold">{uniqueDays}</span>
               </div>
             )}
           </div>
@@ -69,7 +67,7 @@ export default function Journey() {
 
         {/* Bouquet progress list */}
         <h2 className="font-display text-xl font-bold text-[color:var(--color-ink)] mb-3">
-          تقدّمك في الباقات
+          {t('journey.bouquet_progress_title')}
         </h2>
         <div className="space-y-2 mb-8">
           {BOUQUETS.filter((b) => !b.isDua).map((b) => {
@@ -97,12 +95,12 @@ export default function Journey() {
 
         {/* Recent memorizations */}
         <h2 className="font-display text-xl font-bold text-[color:var(--color-ink)] mb-3">
-          آخر ما حفظت
+          {t('journey.recent_title')}
         </h2>
         {recent.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-[color:var(--color-cream-warm)] border border-dashed border-[color:var(--color-cream-deep)]">
             <div className="text-3xl mb-2">🌱</div>
-            <p className="text-sm font-bold text-[color:var(--color-ink-soft)]">لم تحفظ أي اسم بعد — ابدأ من الوسيلة</p>
+            <p className="text-sm font-bold text-[color:var(--color-ink-soft)]">{t('journey.empty')}</p>
           </div>
         ) : (
           <ul className="divide-y divide-[color:var(--color-cream-deep)] bg-white rounded-2xl border border-[color:var(--color-cream-deep)] overflow-hidden">

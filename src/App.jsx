@@ -14,6 +14,7 @@ const Memorize            = lazy(() => import('./pages/student/Memorize'))
 const BouquetSession      = lazy(() => import('./pages/student/BouquetSession'))
 const Achievements        = lazy(() => import('./pages/student/Achievements'))
 const Journey             = lazy(() => import('./pages/student/Journey'))
+const Welcome             = lazy(() => import('./pages/student/Welcome'))
 const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'))
 const AdminStudents       = lazy(() => import('./pages/admin/Students'))
 const AdminStudentDetail  = lazy(() => import('./pages/admin/StudentDetail'))
@@ -36,6 +37,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <Memorize />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/welcome"
+                element={
+                  <ProtectedRoute>
+                    <Welcome />
                   </ProtectedRoute>
                 }
               />

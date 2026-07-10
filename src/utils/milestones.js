@@ -1,4 +1,6 @@
 // Pure milestone / streak computation — shared by student hook and admin views.
+// UI-visible labels live in i18n/dict.js under keys `milestone.{id}.label` and
+// `milestone.{id}.desc`. Consumers should call t(`milestone.${m.id}.label`).
 
 import { BOUQUETS, TOTAL_NAMES } from '../data/bouquets'
 import { NAMES_BY_BOUQUET } from '../data/names99'
@@ -54,12 +56,12 @@ export function computeMilestones({ memorizedCount, memorizedSet, streakInfo, bo
   const famousDone = FAMOUS_IDS.every((id) => memorizedSet.has(id))
   const anyBouquetDone = Object.values(bouquetCompletion).some(Boolean)
   return [
-    { id: 'first-name',    label: 'أول اسم',           desc: 'حفظت أول اسم من أسماء الله',    icon: '🌱', unlocked: memorizedCount >= 1 },
-    { id: 'famous',        label: 'الأسماء المشهورة',    desc: 'أتممت الأسماء الخمسة المشهورة',  icon: '⭐', unlocked: famousDone },
-    { id: 'first-bouquet', label: 'أول باقة',           desc: 'أتممت باقة كاملة',              icon: '🎁', unlocked: anyBouquetDone },
-    { id: 'halfway',       label: 'نصف الطريق',         desc: 'حفظت ٥٠ اسماً',                 icon: '🌓', unlocked: memorizedCount >= 50 },
-    { id: 'week-streak',   label: 'وِرد الأسبوع',        desc: 'وِرد يومي لسبعة أيام',          icon: '🌙', unlocked: streakInfo.streak >= 7 },
-    { id: 'complete',      label: 'الوسيلة كاملة',       desc: 'أحصيت التسع والتسعين',          icon: '👑', unlocked: memorizedCount >= TOTAL_NAMES },
-    { id: 'ninety-days',   label: 'الوِرد التسعوني',     desc: '٩٩ يوماً من الوِرد',            icon: '🕋', unlocked: streakInfo.uniqueDays >= 99 },
+    { id: 'first-name',    icon: '🌱', unlocked: memorizedCount >= 1 },
+    { id: 'famous',        icon: '⭐', unlocked: famousDone },
+    { id: 'first-bouquet', icon: '🎁', unlocked: anyBouquetDone },
+    { id: 'halfway',       icon: '🌓', unlocked: memorizedCount >= 50 },
+    { id: 'week-streak',   icon: '🌙', unlocked: streakInfo.streak >= 7 },
+    { id: 'complete',      icon: '👑', unlocked: memorizedCount >= TOTAL_NAMES },
+    { id: 'ninety-days',   icon: '🕋', unlocked: streakInfo.uniqueDays >= 99 },
   ]
 }
