@@ -3,10 +3,11 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV = [
-  { to: '/admin',          label: 'لوحة التحكم', icon: '🏠', end: true },
-  { to: '/admin/students', label: 'الطلاب',       icon: '👥' },
-  { to: '/admin/inbox',    label: 'الرسائل',      icon: '📥' },
-  { to: '/admin/content',  label: 'المحتوى',      icon: '📖' },
+  { to: '/admin',            label: 'لوحة التحكم', icon: '🏠', end: true },
+  { to: '/admin/students',   label: 'الطلاب',       icon: '👥' },
+  { to: '/admin/inbox',      label: 'الرسائل',      icon: '📥' },
+  { to: '/admin/content',    label: 'الأسماء',      icon: '📖' },
+  { to: '/admin/curriculum', label: 'الدورات',      icon: '🎓' },
 ]
 
 export default function AdminLayout({ title, subtitle, children }) {

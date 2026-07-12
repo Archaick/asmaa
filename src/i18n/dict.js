@@ -269,6 +269,30 @@ export const dict = {
     'welcome.s4.badge_streak': 'سلسلة يومية',
     'welcome.s4.badge_milestones': '٧ إنجازات مقدسة',
     'welcome.s4.badge_chart': 'وسيلتك تُضيء',
+
+    // Curriculum (courses + lessons)
+    'student.nav.curriculum': 'الدورة',
+    'curriculum.title': 'الدورة التعليمية',
+    'curriculum.subtitle': 'رحلة منظمة لفهم أسماء الله الحسنى',
+    'curriculum.empty': 'لم تُنشر دورات بعد',
+    'curriculum.empty_hint': 'ستظهر الدورات هنا فور نشرها من قِبَل المشرف',
+    'curriculum.lessons_count': 'درساً',
+    'curriculum.start': 'ابدأ الدورة',
+    'curriculum.continue': 'متابعة',
+    'curriculum.review': 'مراجعة',
+    'curriculum.progress': 'التقدم',
+
+    'course.no_lessons': 'لم تُضَف دروس بعد لهذه الدورة',
+
+    'lesson.reading_title': 'القراءة',
+    'lesson.reflection_title': 'تأمّل',
+    'lesson.reflection_placeholder': 'اكتب تأمّلك هنا…',
+    'lesson.mark_complete': '✓ أتممت الدرس',
+    'lesson.completed_badge': '✓ مكتمل',
+    'lesson.prev': 'الدرس السابق',
+    'lesson.next': 'الدرس التالي',
+    'lesson.back_to_course': 'عودة للدورة',
+    'lesson.no_body': 'محتوى الدرس قيد الإعداد.',
   },
 
   en: {
@@ -541,5 +565,29 @@ export const dict = {
     'welcome.s4.badge_streak': 'Daily streak',
     'welcome.s4.badge_milestones': '7 sacred milestones',
     'welcome.s4.badge_chart': 'Your chart illuminates',
+
+    // Curriculum (courses + lessons)
+    'student.nav.curriculum': 'Course',
+    'curriculum.title': 'Learning Path',
+    'curriculum.subtitle': 'A structured journey through Allah\'s beautiful names',
+    'curriculum.empty': 'No courses published yet',
+    'curriculum.empty_hint': 'Courses will appear here as soon as the admin publishes them',
+    'curriculum.lessons_count': 'lessons',
+    'curriculum.start': 'Start course',
+    'curriculum.continue': 'Continue',
+    'curriculum.review': 'Review',
+    'curriculum.progress': 'Progress',
+
+    'course.no_lessons': 'No lessons have been added to this course yet',
+
+    'lesson.reading_title': 'Reading',
+    'lesson.reflection_title': 'Reflection',
+    'lesson.reflection_placeholder': 'Write your reflection here…',
+    'lesson.mark_complete': '✓ Mark as complete',
+    'lesson.completed_badge': '✓ Complete',
+    'lesson.prev': 'Previous lesson',
+    'lesson.next': 'Next lesson',
+    'lesson.back_to_course': 'Back to course',
+    'lesson.no_body': 'Lesson content is being prepared.',
   },
 }

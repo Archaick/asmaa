@@ -43,6 +43,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Courses catalog. Everyone signed-in reads. Only admin edits.
+    match /courses/{courseId} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+
+      match /lessons/{lessonId} {
+        allow read:  if request.auth != null;
+        allow write: if isAdmin();
+      }
+    }
+
+    // Per-user lesson progress. User owns theirs; admins can read.
+    match /users/{uid}/lessonProgress/{lessonId} {
+      allow read:  if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Shared reflections queue (student opts in to share with teacher)
     match /reflections/{id} {
       allow read:   if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);

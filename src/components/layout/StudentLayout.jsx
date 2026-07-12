@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useProgress } from '../../hooks/useProgress'
 import { useMilestones } from '../../hooks/useMilestones'
+import { useLessonProgress } from '../../hooks/useLessonProgress'
 import { useLang } from '../../i18n/LangContext'
 import { TOTAL_NAMES } from '../../data/bouquets'
 import { playChime, isSoundEnabled, setSoundEnabled } from '../../utils/chime'
@@ -11,6 +12,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
   const { user, signOut } = useAuth()
   const { memorizedCount, entries, memorized } = useProgress()
   const { milestones, streak } = useMilestones(entries, memorized, memorizedCount)
+  const { completedCount: lessonsCompleted } = useLessonProgress()
   const { t, lang, toggle: toggleLang } = useLang()
   const [sound, setSound] = useState(() => isSoundEnabled())
   const [menuOpen, setMenuOpen] = useState(false)
@@ -68,6 +70,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
             {/* Nav tabs — centered, scrolls on mobile if needed */}
             <nav className="flex-1 flex items-center justify-center gap-1 overflow-x-auto scrollbar-none">
               <NavTab to="/memorize" icon="🕋" label={t('student.nav.memorize')} end />
+              <NavTab to="/curriculum" icon="🎓" label={t('student.nav.curriculum')} badge={lessonsCompleted > 0 ? `${lessonsCompleted}` : null} />
               <NavTab to="/achievements" icon="🏆" label={t('student.nav.achievements')} badge={unlocked ? `${unlocked}/${milestones.length}` : null} />
               <NavTab to="/journey" icon="🌙" label={t('student.nav.journey')} badge={streak > 0 ? `${streak}` : null} />
             </nav>
