@@ -44,11 +44,11 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
   }, [menuOpen])
 
   return (
-    <div className="min-h-screen bg-[color:var(--color-cream)] flex flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-[color:var(--color-cream)] flex flex-col overflow-x-clip" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <header className="sticky top-0 z-40 bg-[color:var(--color-cream)]/95 backdrop-blur border-b border-[color:var(--color-cream-deep)]">
         <div className="max-w-5xl mx-auto px-3 sm:px-5">
           {/* Single row: logo · back · nav · avatar */}
-          <div className="flex items-center gap-2 sm:gap-3 py-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-3 py-2.5">
             <div className="flex items-center gap-2 shrink-0">
               {leftSlot || (
                 <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -68,7 +68,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
             </div>
 
             {/* Primary nav — 3 core destinations, always visible on mobile with labels */}
-            <nav className="flex-1 flex items-center justify-center gap-1 sm:gap-2">
+            <nav className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-2">
               <NavTab to="/memorize" icon="🕋" label={t('student.nav.memorize')} end />
               <NavTab to="/curriculum" icon="🎓" label={t('student.nav.curriculum')} badge={lessonsCompleted > 0 ? `${lessonsCompleted}` : null} />
               <NavTab to="/achievements" icon="🏆" label={t('student.nav.achievements')} badge={unlocked ? `${unlocked}/${milestones.length}` : null} />
@@ -195,16 +195,16 @@ function NavTab({ to, icon, label, badge, end }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        'inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ' +
+        'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-sm font-bold transition whitespace-nowrap min-w-0 ' +
         (isActive
           ? 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] shadow-sm'
           : 'text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-cream-warm)] hover:text-[color:var(--color-ink)]')
       }
     >
       <span className="text-sm sm:text-base">{icon}</span>
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
       {badge && (
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
+        <span className="hidden sm:inline text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
           {badge}
         </span>
       )}
