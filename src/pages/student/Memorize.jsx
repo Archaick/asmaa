@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 import { useMilestones } from '../../hooks/useMilestones'
@@ -8,13 +8,8 @@ import NameSheet from '../../components/NameSheet'
 import { GoldDivider } from '../../components/Ornament'
 import BouquetTile from '../../components/BouquetTile'
 import HadithCard from '../../components/HadithCard'
-import CelebrationOverlay from '../../components/CelebrationOverlay'
 import StudentLayout from '../../components/layout/StudentLayout'
-import { playChime, playMilestoneChime } from '../../utils/chime'
-
-// Same key used by BouquetSession — ensures we only celebrate each bouquet once
-// per browser, even if the student re-completes it (unmark → remark).
-const SEEN_KEY = 'asmaa.celebrated'
+import { playChime } from '../../utils/chime'
 
 export default function MemorizeOverview() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
@@ -22,34 +17,9 @@ export default function MemorizeOverview() {
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
   const { t } = useLang()
   const [openId, setOpenId] = useState(null)
-  const [celebrated, setCelebrated] = useState(null)
-  const prevCompleteRef = useRef({})
 
   const openName = useMemo(() => findName(openId), [findName, openId])
   const isMemorized = openName ? memorized.has(openName.id) : false
-
-  // Celebrate completion of the famous + khitam sections that live directly on
-  // this page (the 6 middle bouquets are celebrated inside BouquetSession).
-  useEffect(() => {
-    for (const id of ['famous', 'khitam']) {
-      const b = BOUQUETS.find((x) => x.id === id)
-      const names = (byBouquet[id] || []).filter((n) => !n.isDua)
-      if (!b || names.length === 0) continue
-      const done = names.filter((n) => memorized.has(n.id)).length
-      const complete = done === names.length
-      const wasComplete = prevCompleteRef.current[id]
-      prevCompleteRef.current[id] = complete
-      if (!wasComplete && complete) {
-        const seen = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}')
-        if (!seen[id]) {
-          seen[id] = Date.now()
-          localStorage.setItem(SEEN_KEY, JSON.stringify(seen))
-          setCelebrated(b)
-          playMilestoneChime()
-        }
-      }
-    }
-  }, [memorized, byBouquet])
 
   const toggleMem = async () => {
     if (!openName) return
@@ -70,19 +40,28 @@ export default function MemorizeOverview() {
     setOpenId(realNames[(next + realNames.length) % realNames.length].id)
   }
 
+  // Every entry-to-a-bouquet is a full session (opening hadith → names → closing → celebration).
+  // Only دعائية stays inline — it's dua phrases, not a bouquet to memorize.
+  const famous = BOUQUETS.find((b) => b.id === 'famous')
+  const khitam = BOUQUETS.find((b) => b.id === 'khitam')
+
   return (
     <StudentLayout showProgress>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Opening hadith — always visible, prominent */}
         <HadithCard hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')} accent="gold" />
 
-        {/* Famous 5 names */}
-        <NamePillsSection
-          title={t('memorize.section.famous')}
-          names={byBouquet.famous || []}
-          memorized={memorized} onOpen={setOpenId}
-          variant="famous" accent="gold"
-        />
+        {/* الأسماء المشهورة — its own session, like every bouquet */}
+        {famous && (
+          <div className="mb-4">
+            <BouquetTile
+              bouquet={famous}
+              memorizedCount={(byBouquet.famous || []).filter((n) => memorized.has(n.id)).length}
+              total={(byBouquet.famous || []).length}
+              complete={!!bouquetCompletion.famous}
+            />
+          </div>
+        )}
 
         <GoldDivider />
 
@@ -116,18 +95,24 @@ export default function MemorizeOverview() {
 
         <GoldDivider />
 
-        <NamePillsSection
-          title={t('memorize.section.khitam')}
-          names={byBouquet.khitam || []}
-          memorized={memorized} onOpen={setOpenId}
-          variant="row" accent="teal"
-        />
+        {/* أسماء الختام — its own session */}
+        {khitam && (
+          <div className="mb-4">
+            <BouquetTile
+              bouquet={khitam}
+              memorizedCount={(byBouquet.khitam || []).filter((n) => memorized.has(n.id)).length}
+              total={(byBouquet.khitam || []).length}
+              complete={!!bouquetCompletion.khitam}
+            />
+          </div>
+        )}
 
+        {/* الأدعية الجامعة — 4 dua phrases (stays inline, not a memorization session) */}
         <NamePillsSection
           title={t('memorize.section.duaa')}
           names={byBouquet.duaa || []}
-          memorized={memorized} onOpen={setOpenId}
-          variant="dua" accent="gold" isDua
+          memorized={memorized}
+          onOpen={setOpenId}
         />
 
         <GoldDivider />
@@ -142,94 +127,32 @@ export default function MemorizeOverview() {
         onToggleMemorized={toggleMem}
         onNav={nav}
       />
-
-      <CelebrationOverlay
-        open={!!celebrated}
-        bouquetTitle={celebrated?.title || ''}
-        onClose={() => setCelebrated(null)}
-      />
     </StudentLayout>
   )
 }
 
-function NamePillsSection({ title, names, memorized, onOpen, variant, accent, isDua }) {
-  const isGold = accent === 'gold'
-  const realCount = names.filter((n) => !n.isDua).length
-  const memInSection = names.filter((n) => !n.isDua && memorized.has(n.id)).length
-  const pct = realCount > 0 ? Math.round((memInSection / realCount) * 100) : 0
-  const complete = realCount > 0 && memInSection === realCount
-  const gridClass =
-    variant === 'dua'    ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' :
-    variant === 'famous' ? 'grid grid-cols-5 gap-2 sm:gap-2.5' :
-    variant === 'row'    ? 'grid grid-cols-4 gap-2 sm:gap-2.5' : 'grid grid-cols-5 gap-1.5'
-
+// Dua phrases only — they're a vocative supplement to the 99 Names, not a
+// memorization bouquet, so they stay inline on the overview rather than
+// opening a full ceremonial session.
+function NamePillsSection({ title, names, memorized, onOpen }) {
   return (
-    <section
-      className="mt-6 relative overflow-hidden rounded-2xl bg-white border border-[color:var(--color-cream-deep)]"
-      dir="rtl"
-    >
-      {!isDua && (
-        <div
-          className="absolute inset-x-0 top-0 h-1"
-          style={{ background: isGold ? 'var(--color-gold)' : 'var(--color-teal)' }}
-        />
-      )}
+    <section className="mt-6 rounded-2xl bg-white border border-[color:var(--color-cream-deep)]" dir="rtl">
       <div className="p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--color-ink)] truncate">
-              {title}
-            </h3>
-            {complete && <span className="text-base" title="مكتملة">👑</span>}
-          </div>
-          {!isDua && realCount > 0 && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-              style={{
-                background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
-                color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
-              }}
+        <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--color-ink)] mb-3">
+          {title}
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {names.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => onOpen(n.id)}
+              className="relative rounded-xl font-serif font-bold text-center text-sm px-3 py-3 border-2 border-[color:var(--color-cream-deep)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:-translate-y-0.5 hover:shadow-sm transition-all"
             >
-              <span dir="ltr">{memInSection} / {realCount} · {pct}%</span>
-            </span>
-          )}
-        </div>
-
-        {!isDua && realCount > 0 && (
-          <div className="h-1.5 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden mb-4">
-            <div
-              className="h-full transition-all duration-700"
-              style={{
-                width: `${pct}%`,
-                background: isGold
-                  ? 'linear-gradient(90deg, var(--color-gold-soft), var(--color-gold))'
-                  : 'linear-gradient(90deg, var(--color-teal-soft), var(--color-teal))',
-              }}
-            />
-          </div>
-        )}
-
-        <div className={gridClass}>
-          {names.map((n) => {
-            const isMem = memorized.has(n.id)
-            return (
-              <button
-                key={n.id} type="button" onClick={() => onOpen(n.id)}
-                className={
-                  'relative rounded-xl font-serif font-bold text-center transition-all border-2 ' +
-                  (variant === 'dua' ? 'text-sm px-3 py-3' : 'text-sm sm:text-base py-3 sm:py-3.5') + ' ' +
-                  (isMem
-                    ? (isGold
-                        ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)]'
-                        : 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]')
-                    : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:-translate-y-0.5 hover:shadow-sm')
-                }
-              >
-                {n.name}
-                {isMem && <span className="absolute top-1 end-1.5 text-[10px]">✓</span>}
-              </button>
-            )
-          })}
+              {n.name}
+              {memorized.has(n.id) && <span className="absolute top-1 end-1.5 text-[10px]">✓</span>}
+            </button>
+          ))}
         </div>
       </div>
     </section>

@@ -170,6 +170,8 @@ export const dict = {
     'bouquet.not_found': 'لم نجد هذه الباقة',
     'bouquet.back_to_chart': 'عودة للوسيلة',
     'bouquet.session.complete_badge': '👑 مكتملة',
+    'bouquet.reset.label': 'أعد الحفظ',
+    'bouquet.reset.confirm': '⚠️ اضغط للتأكيد',
 
     // NameSheet
     'name.acts.meaning': 'المعنى',
@@ -478,6 +480,8 @@ export const dict = {
     'bouquet.not_found': 'This bouquet was not found',
     'bouquet.back_to_chart': 'Back to the Method',
     'bouquet.session.complete_badge': '👑 Complete',
+    'bouquet.reset.label': 'Reset progress',
+    'bouquet.reset.confirm': '⚠️ Tap to confirm',
 
     // NameSheet
     'name.acts.meaning': 'Meaning',
