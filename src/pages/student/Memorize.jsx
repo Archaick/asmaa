@@ -7,12 +7,13 @@ import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import NameSheet from '../../components/NameSheet'
 import { GoldDivider } from '../../components/Ornament'
 import BouquetTile from '../../components/BouquetTile'
+import DailyNameCard from '../../components/DailyNameCard'
 import StudentLayout from '../../components/layout/StudentLayout'
 import { playChime } from '../../utils/chime'
 
 export default function MemorizeOverview() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
-  const { byBouquet, findName } = useNames()
+  const { byBouquet, findName, names } = useNames()
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
   const { t } = useLang()
   const [openId, setOpenId] = useState(null)
@@ -44,6 +45,9 @@ export default function MemorizeOverview() {
   return (
     <StudentLayout showProgress>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* اسم اليوم — daily anchor card */}
+        <DailyNameCard names={names} memorized={memorized} onOpen={setOpenId} />
+
         {/* Opening hadith */}
         <CollapsibleHadith
           hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}

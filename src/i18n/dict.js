@@ -156,6 +156,8 @@ export const dict = {
     'memorize.hadith.opening_label': 'حديث الافتتاح',
     'memorize.hadith.closing_label': 'حديث الاختتام',
     'memorize.chart_eyebrow': 'الوسيلة',
+    'memorize.today.eyebrow': 'اسم اليوم',
+    'memorize.today.cta_hint': 'اضغط لتعرّف عليه',
 
     // Bouquet tile / session
     'bouquet.tag': 'الباقة',
@@ -464,6 +466,8 @@ export const dict = {
     'memorize.hadith.opening_label': 'Opening Hadith',
     'memorize.hadith.closing_label': 'Closing Hadith',
     'memorize.chart_eyebrow': 'The Method',
+    'memorize.today.eyebrow': 'Name of the Day',
+    'memorize.today.cta_hint': 'Tap to open',
 
     // Bouquet tile / session
     'bouquet.tag': 'Bouquet',
