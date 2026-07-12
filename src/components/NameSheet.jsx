@@ -1,14 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLang } from '../i18n/LangContext'
 
-export default function NameSheet({ name, isMemorized, onClose, onToggleMemorized, onNav }) {
+// NameSheet — the ceremonial modal for a single Name of Allah.
+//
+// UX principles:
+//   • Commitment matters: no "unmark" here. The bouquet's Reset button is
+//     the escape hatch, so a stray tap in the sheet can't undo learning.
+//   • The primary action IS progression: tapping "حفظت — التالي" marks the
+//     name memorized AND advances to the next name in a single move.
+//   • Big, gold, top of the modal — never hidden.
+//   • Every transition between names has a gentle pop so it feels playful,
+//     not clinical.
+export default function NameSheet({ name, isMemorized, onClose, onAdvance, onNav }) {
   const { t, lang } = useLang()
+  const [glowing, setGlowing] = useState(false)
 
   useEffect(() => {
     document.body.style.overflow = name ? 'hidden' : ''
     const onKey = (e) => {
       if (!name) return
       if (e.key === 'Escape') onClose?.()
+      // Arrow keys still allow non-committal review browsing
       if (e.key === 'ArrowLeft' && !name.isDua)  onNav?.(lang === 'ar' ? 'next' : 'prev')
       if (e.key === 'ArrowRight' && !name.isDua) onNav?.(lang === 'ar' ? 'prev' : 'next')
     }
@@ -19,7 +31,22 @@ export default function NameSheet({ name, isMemorized, onClose, onToggleMemorize
     }
   }, [name, onClose, onNav, lang])
 
+  // Reset the glow flourish on every name change so it can fire fresh.
+  useEffect(() => { setGlowing(false) }, [name?.id])
+
   if (!name) return null
+
+  const handleAdvance = async () => {
+    if (name.isDua) { onClose?.(); return }
+    if (!isMemorized) {
+      setGlowing(true)
+      // Give the glow a beat to be seen, then advance and let the next name
+      // bloom in — feels like a satisfying commitment moment, not a snap.
+      setTimeout(() => onAdvance?.(), 340)
+    } else {
+      onAdvance?.()
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6">
@@ -29,6 +56,7 @@ export default function NameSheet({ name, isMemorized, onClose, onToggleMemorize
         className="relative w-full sm:max-w-lg max-h-[92dvh] bg-[color:var(--color-cream)] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[color:var(--color-cream-deep)] flex flex-col overflow-hidden animate-fade-in-up"
         dir="rtl"
       >
+        {/* Header */}
         <div className="relative flex items-center justify-between px-5 sm:px-7 py-4 border-b border-[color:var(--color-cream-deep)] bg-[color:var(--color-cream-warm)]">
           <div className="flex items-center gap-2 text-xs font-bold text-[color:var(--color-ink-soft)]">
             <span>
@@ -47,58 +75,57 @@ export default function NameSheet({ name, isMemorized, onClose, onToggleMemorize
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-6">
-          <h2 className="font-serif text-4xl sm:text-5xl font-bold text-center text-[color:var(--color-ink)] mb-6">
+        {/* Content — re-mounts on every name change so it bloom-pops in */}
+        <div key={name.id} className="flex-1 overflow-y-auto px-5 sm:px-7 py-6 animate-fade-swap">
+          {/* Name calligraphy — glows briefly when memorized */}
+          <h2
+            className={
+              'font-serif text-5xl sm:text-6xl font-bold text-center text-[color:var(--color-ink)] mb-6 rounded-2xl ' +
+              (glowing ? 'animate-name-glow' : '')
+            }
+          >
             {name.name}
           </h2>
 
+          {/* Primary action — memorize + advance in one, top of content */}
+          {!name.isDua && (
+            <div className="mb-7">
+              {isMemorized ? (
+                <button
+                  type="button"
+                  onClick={handleAdvance}
+                  className="w-full py-4 rounded-2xl text-base sm:text-lg font-bold bg-white border-2 border-[color:var(--color-teal)] text-[color:var(--color-teal-deep)] shadow-sm hover:shadow-md active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="text-lg">✓</span>
+                  <span>{t('name.action.memorized_next')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAdvance}
+                  disabled={glowing}
+                  className="w-full py-4 rounded-2xl text-base sm:text-lg font-bold text-white shadow-lg hover:shadow-xl active:scale-[0.97] transition-all flex items-center justify-center gap-2 disabled:opacity-90"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))',
+                  }}
+                >
+                  <span className="text-xl">🌟</span>
+                  <span>{t('name.action.memorize_next')}</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Facets */}
           <Facet icon="💡" label={t('name.acts.meaning')} text={loc(name, 'meaning', lang)} accent="gold" />
           <Facet icon="🌟" label={t('name.acts.thanaa')} text={loc(name, 'thanaa',  lang)} accent="teal" />
           <Facet icon="🤲" label={t('name.acts.talab')}  text={loc(name, 'talab',   lang)} accent="gold" last />
-
-          {!name.isDua && (
-            <div className="mt-8">
-              <button
-                type="button"
-                onClick={onToggleMemorized}
-                className={
-                  'w-full py-4 rounded-2xl text-lg font-bold transition ' +
-                  (isMemorized
-                    ? 'bg-[color:var(--color-cream-warm)] text-[color:var(--color-ink)] border-2 border-[color:var(--color-cream-deep)]'
-                    : 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)]')
-                }
-              >
-                {isMemorized ? t('name.action.unmemorize') : t('name.action.memorize')}
-              </button>
-            </div>
-          )}
         </div>
-
-        {!name.isDua && (
-          <div className="border-t border-[color:var(--color-cream-deep)] px-5 sm:px-7 py-3 flex items-center justify-between gap-3 bg-white">
-            <button
-              type="button"
-              onClick={() => onNav?.('prev')}
-              className="px-4 py-2 rounded-full text-sm font-semibold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
-            >
-              {t('name.nav.prev')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onNav?.('next')}
-              className="px-4 py-2 rounded-full text-sm font-semibold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
-            >
-              {t('name.nav.next')}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
-// Field localization: prefer the *En variant when in English mode,
-// fall back to the Arabic (canonical) if the translation is missing.
 function loc(name, field, lang) {
   if (lang === 'en') {
     const en = name[field + 'En']

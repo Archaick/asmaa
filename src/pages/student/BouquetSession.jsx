@@ -78,16 +78,40 @@ export default function BouquetSession() {
     setResetting(false)
   }
 
-  const toggleMem = async () => {
+  // Marks the current name memorized (if it isn't already), then progresses:
+  //   • If every real name in this bouquet is now memorized → close the sheet
+  //     so the celebration overlay can take centre stage.
+  //   • Otherwise advance to the next unmemorized name (cycling if needed).
+  const onAdvance = async () => {
     if (!openName) return
-    if (isMemorized) {
-      await unmarkMemorized(openName.id)
-    } else {
+    const realInBouquet = names.filter((n) => !n.isDua)
+    const alreadyMem = memorized.has(openName.id)
+
+    if (!alreadyMem) {
       playChime()
       await markMemorized(openName.id)
     }
+
+    // Simulate the post-mark set for a synchronous decision (Firestore snapshot
+    // hasn't fired yet by the time we advance).
+    const wouldBeMemorized = new Set(memorized)
+    wouldBeMemorized.add(openName.id)
+    if (realInBouquet.every((n) => wouldBeMemorized.has(n.id))) {
+      setOpenId(null)
+      return
+    }
+
+    // Prefer the next UN-memorized name; fall back to strict next-in-order.
+    const i = realInBouquet.findIndex((n) => n.id === openName.id)
+    for (let step = 1; step <= realInBouquet.length; step++) {
+      const cand = realInBouquet[(i + step) % realInBouquet.length]
+      if (!wouldBeMemorized.has(cand.id)) { setOpenId(cand.id); return }
+    }
+    // All memorized fallback (shouldn't hit given the early return above)
+    setOpenId(realInBouquet[(i + 1) % realInBouquet.length].id)
   }
 
+  // Non-committal review browsing via keyboard arrows only — no visible buttons.
   const nav = (dir) => {
     if (!openName) return
     const realInBouquet = names.filter((n) => !n.isDua)
@@ -234,7 +258,7 @@ export default function BouquetSession() {
         name={openName}
         isMemorized={isMemorized}
         onClose={() => setOpenId(null)}
-        onToggleMemorized={toggleMem}
+        onAdvance={onAdvance}
         onNav={nav}
       />
 

@@ -9,10 +9,9 @@ import { GoldDivider } from '../../components/Ornament'
 import BouquetTile from '../../components/BouquetTile'
 import HadithCard from '../../components/HadithCard'
 import StudentLayout from '../../components/layout/StudentLayout'
-import { playChime } from '../../utils/chime'
 
 export default function MemorizeOverview() {
-  const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
+  const { memorized, memorizedCount, entries } = useProgress()
   const { byBouquet, findName } = useNames()
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
   const { t } = useLang()
@@ -21,15 +20,9 @@ export default function MemorizeOverview() {
   const openName = useMemo(() => findName(openId), [findName, openId])
   const isMemorized = openName ? memorized.has(openName.id) : false
 
-  const toggleMem = async () => {
-    if (!openName) return
-    if (isMemorized) {
-      await unmarkMemorized(openName.id)
-    } else {
-      playChime()
-      await markMemorized(openName.id)
-    }
-  }
+  // On the overview page NameSheet only opens for دعائية (isDua) phrases,
+  // which have no memorize button — the sheet just closes on advance.
+  const onAdvance = () => setOpenId(null)
 
   const nav = (dir) => {
     if (!openName) return
@@ -124,7 +117,7 @@ export default function MemorizeOverview() {
         name={openName}
         isMemorized={isMemorized}
         onClose={() => setOpenId(null)}
-        onToggleMemorized={toggleMem}
+        onAdvance={onAdvance}
         onNav={nav}
       />
     </StudentLayout>
