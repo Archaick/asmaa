@@ -67,12 +67,11 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
               )}
             </div>
 
-            {/* Nav tabs — centered, scrolls on mobile if needed */}
-            <nav className="flex-1 flex items-center justify-center gap-1 overflow-x-auto scrollbar-none">
+            {/* Primary nav — 3 core destinations, always visible on mobile with labels */}
+            <nav className="flex-1 flex items-center justify-center gap-1 sm:gap-2">
               <NavTab to="/memorize" icon="🕋" label={t('student.nav.memorize')} end />
               <NavTab to="/curriculum" icon="🎓" label={t('student.nav.curriculum')} badge={lessonsCompleted > 0 ? `${lessonsCompleted}` : null} />
               <NavTab to="/achievements" icon="🏆" label={t('student.nav.achievements')} badge={unlocked ? `${unlocked}/${milestones.length}` : null} />
-              <NavTab to="/journey" icon="🌙" label={t('student.nav.journey')} badge={streak > 0 ? `${streak}` : null} />
             </nav>
 
             {/* Avatar + dropdown */}
@@ -93,7 +92,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
 
               {menuOpen && (
                 <div
-                  className="absolute end-0 mt-2 w-64 bg-white rounded-2xl border border-[color:var(--color-cream-deep)] shadow-xl overflow-hidden animate-fade-in-up"
+                  className="absolute end-0 mt-2 w-64 bg-white rounded-2xl border border-[color:var(--color-cream-deep)] shadow-xl overflow-hidden"
                 >
                   {/* Identity */}
                   <div className="px-4 py-3 border-b border-[color:var(--color-cream-deep)] bg-[color:var(--color-cream-warm)]">
@@ -106,11 +105,28 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
                     </div>
                   </div>
 
+                  {/* Secondary destinations */}
+                  <Link
+                    to="/journey"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm"
+                  >
+                    <span className="text-lg w-6">🌙</span>
+                    <span className="flex-1 font-semibold text-[color:var(--color-ink)]">
+                      {t('student.nav.journey')}
+                    </span>
+                    {streak > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
+                        {streak}
+                      </span>
+                    )}
+                  </Link>
+
                   {/* Toggles */}
                   <button
                     type="button"
                     onClick={() => { toggleSound() }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm border-t border-[color:var(--color-cream-deep)]"
                   >
                     <span className="text-lg w-6">{sound ? '🔔' : '🔕'}</span>
                     <span className="flex-1 font-semibold text-[color:var(--color-ink)]">
@@ -179,14 +195,14 @@ function NavTab({ to, icon, label, badge, end }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-sm font-bold transition whitespace-nowrap ' +
+        'inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ' +
         (isActive
           ? 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] shadow-sm'
           : 'text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-cream-warm)] hover:text-[color:var(--color-ink)]')
       }
     >
-      <span className="text-base">{icon}</span>
-      <span className="hidden sm:inline">{label}</span>
+      <span className="text-sm sm:text-base">{icon}</span>
+      <span>{label}</span>
       {badge && (
         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
           {badge}

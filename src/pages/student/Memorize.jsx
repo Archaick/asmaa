@@ -7,18 +7,15 @@ import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import NameSheet from '../../components/NameSheet'
 import { GoldDivider } from '../../components/Ornament'
 import BouquetTile from '../../components/BouquetTile'
-import DailyNameCard from '../../components/DailyNameCard'
 import StudentLayout from '../../components/layout/StudentLayout'
 import { playChime } from '../../utils/chime'
 
 export default function MemorizeOverview() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
-  const { byBouquet, findName, names } = useNames()
+  const { byBouquet, findName } = useNames()
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
   const { t } = useLang()
   const [openId, setOpenId] = useState(null)
-  const [openingExp, setOpeningExp] = useState(false)
-  const [closingExp, setClosingExp] = useState(false)
 
   const openName = useMemo(() => findName(openId), [findName, openId])
   const isMemorized = openName ? memorized.has(openName.id) : false
@@ -45,13 +42,9 @@ export default function MemorizeOverview() {
   return (
     <StudentLayout showProgress>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* اسم اليوم — daily anchor card */}
-        <DailyNameCard names={names} memorized={memorized} onOpen={setOpenId} />
-
-        {/* Opening hadith */}
-        <CollapsibleHadith
+        {/* Opening hadith — always visible, prominent */}
+        <FullHadith
           hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}
-          expanded={openingExp} onToggle={() => setOpeningExp(!openingExp)}
           accent="gold"
         />
 
@@ -111,9 +104,8 @@ export default function MemorizeOverview() {
 
         <GoldDivider />
 
-        <CollapsibleHadith
+        <FullHadith
           hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')}
-          expanded={closingExp} onToggle={() => setClosingExp(!closingExp)}
           accent="teal"
         />
       </div>
@@ -129,31 +121,29 @@ export default function MemorizeOverview() {
   )
 }
 
-function CollapsibleHadith({ hadith, label, expanded, onToggle, accent }) {
+function FullHadith({ hadith, label, accent }) {
   const isGold = accent === 'gold'
   return (
-    <div className="max-w-3xl mx-auto mb-6">
-      <button
-        type="button" onClick={onToggle}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
-      >
-        <span className="text-[11px] font-bold uppercase tracking-widest"
-              style={{ color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)' }}>
+    <div className="max-w-3xl mx-auto mb-6 relative overflow-hidden rounded-3xl bg-white border border-[color:var(--color-cream-deep)]">
+      <div
+        className="absolute inset-x-0 top-0 h-1.5"
+        style={{ background: isGold ? 'var(--color-gold)' : 'var(--color-teal)' }}
+      />
+      <div className="p-6 sm:p-8 text-center">
+        <div
+          className="inline-block text-[11px] font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full"
+          style={{
+            background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
+            color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
+          }}
+        >
           {label}
-        </span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-             className={'transition-transform text-[color:var(--color-ink-mute)] ' + (expanded ? 'rotate-180' : '')}>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      {expanded && (
-        <div className="mt-2 p-5 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] text-center animate-fade-in-up">
-          <p className="font-serif text-lg sm:text-xl leading-relaxed text-[color:var(--color-ink)]" dir="rtl">
-            «{hadith.text}»
-          </p>
-          <p className="text-xs text-[color:var(--color-ink-mute)] mt-2">{hadith.source}</p>
         </div>
-      )}
+        <p className="font-serif text-xl sm:text-2xl leading-loose text-[color:var(--color-ink)]" dir="rtl">
+          «{hadith.text}»
+        </p>
+        <p className="text-xs text-[color:var(--color-ink-mute)] mt-3">{hadith.source}</p>
+      </div>
     </div>
   )
 }
