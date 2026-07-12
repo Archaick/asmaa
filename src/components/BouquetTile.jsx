@@ -12,7 +12,7 @@ export default function BouquetTile({ bouquet, memorizedCount, total, complete }
   return (
     <Link
       to={`/memorize/${bouquet.id}`}
-      className="group relative overflow-hidden p-5 sm:p-6 rounded-3xl bg-white border transition-all hover:-translate-y-1 hover:shadow-xl"
+      className="group block w-full relative overflow-hidden p-5 sm:p-6 rounded-3xl bg-white border transition-all hover:-translate-y-1 hover:shadow-xl"
       style={{ borderColor: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)' }}
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
     >
