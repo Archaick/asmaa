@@ -275,7 +275,7 @@ export const dict = {
     // Curriculum — 9 bouquet lessons (student side)
     'student.nav.curriculum': 'الدورة',
     'curriculum.title': 'الدورة التعليمية',
-    'curriculum.subtitle': 'تسع دروس تحمل منهج الشيخ — درس لكل باقة، على الأفعال الأربعة: أعرف · أثني · أدعو · أتعبد',
+    'curriculum.subtitle': '٩ دروس — درس لكل باقة، على الأفعال الأربعة: أعرف · أثني · أدعو · أتعبد',
     'curriculum.empty': 'لم تُنشر دروس بعد',
     'curriculum.empty_hint': 'ستظهر الدروس هنا فور نشرها من قِبَل المشرف',
     'curriculum.start': 'ابدأ الدرس',
@@ -583,7 +583,7 @@ export const dict = {
     // Curriculum — 9 bouquet lessons (student side)
     'student.nav.curriculum': 'Lessons',
     'curriculum.title': 'The Course',
-    'curriculum.subtitle': "Nine lessons carrying the sheikh's method — one per bouquet, on the four verbs: know · praise · ask · embody",
+    'curriculum.subtitle': '9 lessons — one per bouquet, on the four verbs: know · praise · ask · embody',
     'curriculum.empty': 'No lessons published yet',
     'curriculum.empty_hint': 'Lessons appear here as the admin publishes them',
     'curriculum.start': 'Start lesson',

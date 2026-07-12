@@ -16,15 +16,13 @@ export default function AdminCurriculum() {
   const { byBouquet } = useNames()
 
   return (
-    <AdminLayout title="الدورات" subtitle="٩ دروس ثابتة — درس لكل باقة، بمنهج الشيخ (افتتاح ← الأسماء بالأفعال الأربعة ← تمارين ← ختام)">
+    <AdminLayout title="الدورات" subtitle="٩ دروس — درس لكل باقة">
       <div className="mb-6 p-4 rounded-2xl bg-[color:var(--color-cream-warm)] border border-[color:var(--color-cream-deep)]">
         <div className="flex items-start gap-3">
           <div className="text-2xl shrink-0">📚</div>
           <div className="flex-1 text-sm text-[color:var(--color-ink-soft)] leading-relaxed">
-            <div className="font-bold text-[color:var(--color-ink)] mb-1">قالب موحّد لكل الدروس</div>
-            كل درس يفتح بحديث الافتتاح، يمشي بالطالب في أسماء الباقة عبر <b>الأفعال الأربعة</b>
-            (المعنى · الثناء · الطلب · التعبد)، ثم كتلة تمارين، ثم يُختم بحديث الاختتام —
-            هكذا نضمن أن منهج الشيخ يُطبَّق حرفياً على كل الباقات.
+            <div className="font-bold text-[color:var(--color-ink)] mb-1">القالب</div>
+            افتتاح ← أسماء الباقة على الأفعال الأربعة (معنى · ثناء · طلب · تعبد) ← تمارين ← ختام
           </div>
         </div>
       </div>
