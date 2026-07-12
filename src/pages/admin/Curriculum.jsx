@@ -53,12 +53,12 @@ function LessonRow({ lesson, nameCount }) {
   const [error, setError] = useState(null)
 
   useEffect(() => { setForm(toForm(lesson)) }, [
-    lesson.published, lesson.introAr, lesson.introEn, lesson.outroAr, lesson.outroEn,
+    lesson.introAr, lesson.introEn, lesson.outroAr, lesson.outroEn,
     JSON.stringify(lesson.questionTypes),
   ])
 
-  const dirty =
-    form.published !== lesson.published ||
+  // "dirty" only for the content fields — publish has its own instant toggle below.
+  const contentDirty =
     form.introAr !== lesson.introAr ||
     form.introEn !== lesson.introEn ||
     form.outroAr !== lesson.outroAr ||
@@ -68,18 +68,20 @@ function LessonRow({ lesson, nameCount }) {
   const b = lesson.bouquet
   const isGold = b.color === 'gold'
 
+  // Instant publish toggle — writes immediately, like an OS toggle switch.
   const togglePublish = async () => {
     setSaving(true); setError(null)
     try {
       await saveBouquetLesson(lesson.id, { published: !lesson.published })
+      setSavedFlash(true); setTimeout(() => setSavedFlash(false), 1200)
     } catch (e) { setError(e?.message || 'فشل') } finally { setSaving(false) }
   }
 
-  const save = async () => {
+  // Save button — only persists content fields; publish is handled instantly above.
+  const saveContent = async () => {
     setSaving(true); setError(null)
     try {
       await saveBouquetLesson(lesson.id, {
-        published: form.published,
         introAr: form.introAr,
         introEn: form.introEn,
         outroAr: form.outroAr,
@@ -94,8 +96,14 @@ function LessonRow({ lesson, nameCount }) {
 
   return (
     <li className="rounded-2xl bg-white border border-[color:var(--color-cream-deep)] overflow-hidden">
-      {/* Row header */}
-      <div className="flex items-center gap-3 p-4">
+      {/* Row header — click anywhere on the row (except the toggle) to expand */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded) } }}
+        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-[color:var(--color-cream-warm)] transition"
+      >
         <div
           className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center font-display font-bold text-lg"
           style={{
@@ -113,9 +121,13 @@ function LessonRow({ lesson, nameCount }) {
               {nameCount} {b.isDua ? 'دعاء' : 'اسم'}
             </span>
             {lesson.published ? (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[color:var(--color-teal-soft)] text-[color:var(--color-teal-deep)]">منشور</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[color:var(--color-teal-soft)] text-[color:var(--color-teal-deep)]">
+                ✓ منشور للطلاب
+              </span>
             ) : (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[color:var(--color-cream-warm)] text-[color:var(--color-ink-mute)]">مسودّة</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[color:var(--color-cream-warm)] text-[color:var(--color-ink-mute)]">
+                مسودّة (لا يراه الطلاب)
+              </span>
             )}
           </div>
           <div className="text-xs text-[color:var(--color-ink-soft)] mt-0.5">
@@ -123,35 +135,45 @@ function LessonRow({ lesson, nameCount }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={togglePublish}
-          disabled={saving}
-          className={
-            'px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ' +
-            (lesson.published
-              ? 'bg-[color:var(--color-cream-warm)] text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-cream-deep)] border border-[color:var(--color-cream-deep)]'
-              : 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)]')
-          }
-        >
-          {lesson.published ? 'إلغاء النشر' : 'نشر'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="w-9 h-9 rounded-lg hover:bg-[color:var(--color-cream-warm)] transition flex items-center justify-center shrink-0"
-          aria-label="تحرير"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-               className={'transition-transform ' + (expanded ? 'rotate-180' : '')}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+             className={'shrink-0 transition-transform text-[color:var(--color-ink-mute)] ' + (expanded ? 'rotate-180' : '')}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
       </div>
 
       {expanded && (
         <div className="p-5 border-t border-[color:var(--color-cream-deep)] bg-[color:var(--color-cream-warm)]">
+          {/* Publish switch — instant save, independent from content edits */}
+          <div className="flex items-center justify-between gap-3 p-3 mb-4 rounded-xl bg-white border border-[color:var(--color-cream-deep)]" dir="rtl">
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm text-[color:var(--color-ink)]">
+                {lesson.published ? 'الدرس ظاهر للطلاب' : 'الدرس مخفي — مسودّة'}
+              </div>
+              <div className="text-[11px] text-[color:var(--color-ink-mute)] mt-0.5">
+                يُحفظ فورَ التبديل — لا يحتاج زر حفظ.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={togglePublish}
+              disabled={saving}
+              role="switch"
+              aria-checked={lesson.published}
+              className={
+                'relative w-14 h-8 rounded-full transition shrink-0 disabled:opacity-60 ' +
+                (lesson.published ? 'bg-[color:var(--color-teal-deep)]' : 'bg-[color:var(--color-cream-deep)]')
+              }
+              aria-label={lesson.published ? 'إخفاء الدرس عن الطلاب' : 'إظهار الدرس للطلاب'}
+            >
+              <span
+                className={
+                  'absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ' +
+                  (lesson.published ? 'end-1' : 'end-7')
+                }
+              />
+            </button>
+          </div>
+
           {/* AR/EN tabs */}
           <div className="flex items-center gap-1 mb-3 p-1 bg-white rounded-xl border border-[color:var(--color-cream-deep)] w-fit">
             <TabBtn active={tab === 'ar'} onClick={() => setTab('ar')}>عربي</TabBtn>
@@ -231,16 +253,21 @@ function LessonRow({ lesson, nameCount }) {
 
           {error && <div className="mt-3 text-sm text-red-700">{error}</div>}
 
-          <div className="mt-4 flex items-center justify-end gap-2">
-            {savedFlash && <span className="text-sm font-bold text-[color:var(--color-teal-deep)]">✓ محفوظ</span>}
-            <button
-              type="button"
-              onClick={save}
-              disabled={!dirty || saving}
-              className="px-5 py-2 rounded-full text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] disabled:opacity-50 transition"
-            >
-              {saving ? '…' : 'حفظ'}
-            </button>
+          <div className="mt-4 flex items-center justify-between gap-2" dir="rtl">
+            <div className="text-[11px] text-[color:var(--color-ink-mute)]">
+              {contentDirty ? 'تغييرات غير محفوظة' : 'لا تغييرات'}
+            </div>
+            <div className="flex items-center gap-2">
+              {savedFlash && <span className="text-sm font-bold text-[color:var(--color-teal-deep)]">✓ محفوظ</span>}
+              <button
+                type="button"
+                onClick={saveContent}
+                disabled={!contentDirty || saving}
+                className="px-5 py-2 rounded-full text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] disabled:opacity-50 transition"
+              >
+                {saving ? '…' : 'حفظ التعديلات'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -279,7 +306,6 @@ function Field({ label, value, onChange, placeholder, hint }) {
 
 function toForm(lesson) {
   return {
-    published: !!lesson.published,
     introAr: lesson.introAr || '',
     introEn: lesson.introEn || '',
     outroAr: lesson.outroAr || '',
