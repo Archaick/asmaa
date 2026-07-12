@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { doc, increment, serverTimestamp, writeBatch } from 'firebase/firestore'
+import { db } from '../../firebase'
+import { useAuth } from '../../context/AuthContext'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
+import { REAL_NAME_IDS } from '../../data/names99'
 import NameSheet from '../../components/NameSheet'
 import CelebrationOverlay from '../../components/CelebrationOverlay'
 import HadithCard from '../../components/HadithCard'
@@ -15,7 +19,8 @@ const RESET_CONFIRM_MS = 3000
 
 export default function BouquetSession() {
   const { bouquetId } = useParams()
-  const { memorized, markMemorized, unmarkMemorized } = useProgress()
+  const { user } = useAuth()
+  const { memorized, markMemorized } = useProgress()
   const { byBouquet, findName } = useNames()
   const { t } = useLang()
 
@@ -23,6 +28,7 @@ export default function BouquetSession() {
   const [celebrated, setCelebrated] = useState(null)
   const [resetArmed, setResetArmed] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState(null)
   const prevCompleteRef = useRef({})
 
   const bouquet = BOUQUETS.find((b) => b.id === bouquetId)
@@ -65,17 +71,45 @@ export default function BouquetSession() {
 
   const onReset = async () => {
     if (!resetArmed) { setResetArmed(true); return }
-    setResetting(true); setResetArmed(false)
-    const toUnmark = names.filter((n) => memorized.has(n.id))
-    await Promise.all(toUnmark.map((n) => unmarkMemorized(n.id)))
-    // Also clear the celebration seen-marker so re-completing celebrates again.
-    if (bouquet) {
+    if (!user || !bouquet) return
+    setResetting(true); setResetArmed(false); setResetError(null)
+
+    // Snapshot the ids to clear synchronously — avoids any stale-closure
+    // issues from useProgress.unmarkMemorized short-circuiting mid-batch.
+    const idsToClear = names
+      .filter((n) => !n.isDua && memorized.has(n.id))
+      .map((n) => n.id)
+
+    try {
+      if (idsToClear.length > 0) {
+        // Single atomic batch: all progress docs deleted + stats counter
+        // decremented in one commit. Either everything sticks or nothing does.
+        const batch = writeBatch(db)
+        for (const id of idsToClear) {
+          batch.delete(doc(db, 'users', user.uid, 'progress', id))
+        }
+        const realCount = idsToClear.filter((id) => REAL_NAME_IDS.includes(id)).length
+        if (realCount > 0) {
+          batch.set(
+            doc(db, 'users', user.uid),
+            { 'stats.memorized': increment(-realCount), lastActive: serverTimestamp() },
+            { merge: true }
+          )
+        }
+        await batch.commit()
+      }
+
+      // Clear the celebration seen-marker so re-completing celebrates again.
       const seen = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}')
       delete seen[bouquet.id]
       localStorage.setItem(SEEN_KEY, JSON.stringify(seen))
       prevCompleteRef.current[bouquet.id] = false
+    } catch (e) {
+      console.error('[BouquetSession] reset failed:', e)
+      setResetError(e?.message || 'فشل مسح التقدم')
+    } finally {
+      setResetting(false)
     }
-    setResetting(false)
   }
 
   // Marks the current name memorized (if it isn't already), then progresses:
@@ -171,6 +205,37 @@ export default function BouquetSession() {
             )}
           </div>
 
+          {/* Reset — top of the page, apparent when there's progress to clear */}
+          {!bouquet.isDua && memInBouquet > 0 && (
+            <div className="flex justify-center mb-6">
+              <button
+                type="button"
+                onClick={onReset}
+                disabled={resetting}
+                className={
+                  'inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border-2 shadow-sm hover:shadow-md active:scale-[0.97] transition-all disabled:opacity-60 ' +
+                  (resetArmed
+                    ? 'bg-red-50 border-red-400 text-red-800 hover:bg-red-100 animate-pulse'
+                    : 'bg-white border-[color:var(--color-gold-soft)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)]')
+                }
+              >
+                <span className="text-base">{resetArmed ? '⚠️' : '↺'}</span>
+                <span>
+                  {resetting
+                    ? '…'
+                    : resetArmed
+                      ? t('bouquet.reset.confirm')
+                      : t('bouquet.reset.label')}
+                </span>
+              </button>
+            </div>
+          )}
+          {resetError && (
+            <div className="mb-4 mx-auto max-w-sm px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs text-center">
+              {resetError}
+            </div>
+          )}
+
           {/* Opening hadith — always visible, prominent (start of the ceremony) */}
           <HadithCard hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')} accent="gold" />
 
@@ -220,35 +285,15 @@ export default function BouquetSession() {
             <HadithCard hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')} accent="teal" />
           </div>
 
-          {/* Reset + back — no auto-jump to next bouquet, student chooses next */}
+          {/* Back to الوسيلة — student picks their next bouquet from the chart */}
           {!bouquet.isDua && (
-            <div className="mt-8 flex items-center justify-between gap-3 flex-wrap">
+            <div className="mt-8 flex justify-center">
               <Link
                 to="/memorize"
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold border border-[color:var(--color-cream-deep)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] transition"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-bold border border-[color:var(--color-cream-deep)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] transition"
               >
                 → {t('bouquet.back_to_chart')}
               </Link>
-
-              {memInBouquet > 0 && (
-                <button
-                  type="button"
-                  onClick={onReset}
-                  disabled={resetting}
-                  className={
-                    'inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold border transition disabled:opacity-60 ' +
-                    (resetArmed
-                      ? 'bg-red-50 border-red-300 text-red-800 hover:bg-red-100'
-                      : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink-soft)] hover:border-[color:var(--color-ink-mute)]')
-                  }
-                >
-                  {resetting
-                    ? '…'
-                    : resetArmed
-                      ? t('bouquet.reset.confirm')
-                      : `↺ ${t('bouquet.reset.label')}`}
-                </button>
-              )}
             </div>
           )}
         </div>
