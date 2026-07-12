@@ -7,6 +7,7 @@ import { useMilestones } from '../../hooks/useMilestones'
 import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH, TOTAL_NAMES } from '../../data/bouquets'
 import NameSheet from '../../components/NameSheet'
 import CelebrationOverlay from '../../components/CelebrationOverlay'
+import HadithCard from '../../components/HadithCard'
 import StudentLayout from '../../components/layout/StudentLayout'
 import { useLang } from '../../i18n/LangContext'
 import { playChime, playMilestoneChime } from '../../utils/chime'
@@ -22,22 +23,8 @@ export default function BouquetSession() {
   const { t } = useLang()
 
   const [openId, setOpenId] = useState(null)
-  const [openingExp, setOpeningExp] = useState(false)
-  const [closingExp, setClosingExp] = useState(false)
   const [celebrated, setCelebrated] = useState(null)
   const prevCompleteRef = useRef({})
-
-  // Ceremonial reveal on every bouquet visit:
-  //   - opening hadith fades in first
-  //   - names grid staggers in
-  //   - closing hadith fades in last
-  useEffect(() => {
-    setOpeningExp(false)
-    setClosingExp(false)
-    const t1 = setTimeout(() => setOpeningExp(true), 150)
-    const t2 = setTimeout(() => setClosingExp(true), 1350)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [bouquetId])
 
   const bouquet = BOUQUETS.find((b) => b.id === bouquetId)
   const names = byBouquet[bouquetId] || []
@@ -138,12 +125,8 @@ export default function BouquetSession() {
             )}
           </div>
 
-          {/* Opening hadith (collapsed) */}
-          <CollapsibleHadith
-            hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}
-            expanded={openingExp} onToggle={() => setOpeningExp(!openingExp)}
-            accent="gold"
-          />
+          {/* Opening hadith — always visible, prominent (start of the ceremony) */}
+          <HadithCard hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')} accent="gold" />
 
           {/* أنت الله divider */}
           {!bouquet.isDua && bouquet.id !== 'famous' && bouquet.id !== 'khitam' && (
@@ -186,13 +169,9 @@ export default function BouquetSession() {
             })}
           </div>
 
-          {/* Closing hadith (collapsed) */}
+          {/* Closing hadith — always visible, prominent (end of the ceremony) */}
           <div className="mt-6">
-            <CollapsibleHadith
-              hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')}
-              expanded={closingExp} onToggle={() => setClosingExp(!closingExp)}
-              accent="teal"
-            />
+            <HadithCard hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')} accent="teal" />
           </div>
 
           {/* Prev/Next nav */}
@@ -248,32 +227,3 @@ function gridClassFor(bouquet) {
   return 'grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3'
 }
 
-function CollapsibleHadith({ hadith, label, expanded, onToggle, accent }) {
-  const isGold = accent === 'gold'
-  return (
-    <div className="max-w-3xl mx-auto">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] transition"
-      >
-        <span className="text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)' }}>
-          {label}
-        </span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-             className={'transition-transform text-[color:var(--color-ink-mute)] ' + (expanded ? 'rotate-180' : '')}>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      {expanded && (
-        <div className="mt-2 p-5 rounded-2xl bg-white border border-[color:var(--color-cream-deep)] text-center animate-fade-in-up">
-          <p className="font-serif text-base sm:text-lg leading-relaxed text-[color:var(--color-ink)]" dir="rtl">
-            «{hadith.text}»
-          </p>
-          <p className="text-xs text-[color:var(--color-ink-mute)] mt-2">{hadith.source}</p>
-        </div>
-      )}
-    </div>
-  )
-}

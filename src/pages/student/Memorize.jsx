@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 import { useMilestones } from '../../hooks/useMilestones'
@@ -7,8 +7,14 @@ import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import NameSheet from '../../components/NameSheet'
 import { GoldDivider } from '../../components/Ornament'
 import BouquetTile from '../../components/BouquetTile'
+import HadithCard from '../../components/HadithCard'
+import CelebrationOverlay from '../../components/CelebrationOverlay'
 import StudentLayout from '../../components/layout/StudentLayout'
-import { playChime } from '../../utils/chime'
+import { playChime, playMilestoneChime } from '../../utils/chime'
+
+// Same key used by BouquetSession — ensures we only celebrate each bouquet once
+// per browser, even if the student re-completes it (unmark → remark).
+const SEEN_KEY = 'asmaa.celebrated'
 
 export default function MemorizeOverview() {
   const { memorized, memorizedCount, entries, markMemorized, unmarkMemorized } = useProgress()
@@ -16,9 +22,34 @@ export default function MemorizeOverview() {
   const { bouquetCompletion } = useMilestones(entries, memorized, memorizedCount)
   const { t } = useLang()
   const [openId, setOpenId] = useState(null)
+  const [celebrated, setCelebrated] = useState(null)
+  const prevCompleteRef = useRef({})
 
   const openName = useMemo(() => findName(openId), [findName, openId])
   const isMemorized = openName ? memorized.has(openName.id) : false
+
+  // Celebrate completion of the famous + khitam sections that live directly on
+  // this page (the 6 middle bouquets are celebrated inside BouquetSession).
+  useEffect(() => {
+    for (const id of ['famous', 'khitam']) {
+      const b = BOUQUETS.find((x) => x.id === id)
+      const names = (byBouquet[id] || []).filter((n) => !n.isDua)
+      if (!b || names.length === 0) continue
+      const done = names.filter((n) => memorized.has(n.id)).length
+      const complete = done === names.length
+      const wasComplete = prevCompleteRef.current[id]
+      prevCompleteRef.current[id] = complete
+      if (!wasComplete && complete) {
+        const seen = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}')
+        if (!seen[id]) {
+          seen[id] = Date.now()
+          localStorage.setItem(SEEN_KEY, JSON.stringify(seen))
+          setCelebrated(b)
+          playMilestoneChime()
+        }
+      }
+    }
+  }, [memorized, byBouquet])
 
   const toggleMem = async () => {
     if (!openName) return
@@ -43,10 +74,7 @@ export default function MemorizeOverview() {
     <StudentLayout showProgress>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Opening hadith — always visible, prominent */}
-        <FullHadith
-          hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')}
-          accent="gold"
-        />
+        <HadithCard hadith={OPENING_HADITH} label={t('memorize.hadith.opening_label')} accent="gold" />
 
         {/* Famous 5 names */}
         <NamePillsSection
@@ -104,10 +132,7 @@ export default function MemorizeOverview() {
 
         <GoldDivider />
 
-        <FullHadith
-          hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')}
-          accent="teal"
-        />
+        <HadithCard hadith={CLOSING_HADITH} label={t('memorize.hadith.closing_label')} accent="teal" />
       </div>
 
       <NameSheet
@@ -117,76 +142,95 @@ export default function MemorizeOverview() {
         onToggleMemorized={toggleMem}
         onNav={nav}
       />
-    </StudentLayout>
-  )
-}
 
-function FullHadith({ hadith, label, accent }) {
-  const isGold = accent === 'gold'
-  return (
-    <div className="max-w-3xl mx-auto mb-6 relative overflow-hidden rounded-3xl bg-white border border-[color:var(--color-cream-deep)]">
-      <div
-        className="absolute inset-x-0 top-0 h-1.5"
-        style={{ background: isGold ? 'var(--color-gold)' : 'var(--color-teal)' }}
+      <CelebrationOverlay
+        open={!!celebrated}
+        bouquetTitle={celebrated?.title || ''}
+        onClose={() => setCelebrated(null)}
       />
-      <div className="p-6 sm:p-8 text-center">
-        <div
-          className="inline-block text-[11px] font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full"
-          style={{
-            background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
-            color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
-          }}
-        >
-          {label}
-        </div>
-        <p className="font-serif text-xl sm:text-2xl leading-loose text-[color:var(--color-ink)]" dir="rtl">
-          «{hadith.text}»
-        </p>
-        <p className="text-xs text-[color:var(--color-ink-mute)] mt-3">{hadith.source}</p>
-      </div>
-    </div>
+    </StudentLayout>
   )
 }
 
 function NamePillsSection({ title, names, memorized, onOpen, variant, accent, isDua }) {
   const isGold = accent === 'gold'
-  const memInSection = names.filter((n) => !n.isDua && memorized.has(n.id)).length
   const realCount = names.filter((n) => !n.isDua).length
+  const memInSection = names.filter((n) => !n.isDua && memorized.has(n.id)).length
+  const pct = realCount > 0 ? Math.round((memInSection / realCount) * 100) : 0
+  const complete = realCount > 0 && memInSection === realCount
   const gridClass =
-    variant === 'dua'    ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' :
-    variant === 'famous' ? 'grid grid-cols-5 gap-2' :
-    variant === 'row'    ? 'grid grid-cols-4 gap-2' : 'grid grid-cols-5 gap-1.5'
+    variant === 'dua'    ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' :
+    variant === 'famous' ? 'grid grid-cols-5 gap-2 sm:gap-2.5' :
+    variant === 'row'    ? 'grid grid-cols-4 gap-2 sm:gap-2.5' : 'grid grid-cols-5 gap-1.5'
+
   return (
-    <section className="mt-6 p-4 sm:p-5 rounded-2xl bg-white border border-[color:var(--color-cream-deep)]" dir="rtl">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--color-ink)]">{title}</h3>
-        {!isDua && realCount > 0 && (
-          <span className="text-xs font-bold text-[color:var(--color-ink-soft)]" dir="ltr">
-            {memInSection}/{realCount}
-          </span>
-        )}
-      </div>
-      <div className={gridClass}>
-        {names.map((n) => {
-          const isMem = memorized.has(n.id)
-          return (
-            <button
-              key={n.id} type="button" onClick={() => onOpen(n.id)}
-              className={
-                'relative rounded-lg font-serif font-bold text-center transition-all border-2 ' +
-                (variant === 'dua' ? 'text-sm px-3 py-3' : 'text-sm sm:text-base py-2.5 sm:py-3') + ' ' +
-                (isMem
-                  ? (isGold
-                      ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)]'
-                      : 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]')
-                  : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:-translate-y-0.5')
-              }
+    <section
+      className="mt-6 relative overflow-hidden rounded-2xl bg-white border border-[color:var(--color-cream-deep)]"
+      dir="rtl"
+    >
+      {!isDua && (
+        <div
+          className="absolute inset-x-0 top-0 h-1"
+          style={{ background: isGold ? 'var(--color-gold)' : 'var(--color-teal)' }}
+        />
+      )}
+      <div className="p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--color-ink)] truncate">
+              {title}
+            </h3>
+            {complete && <span className="text-base" title="مكتملة">👑</span>}
+          </div>
+          {!isDua && realCount > 0 && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+              style={{
+                background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
+                color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
+              }}
             >
-              {n.name}
-              {isMem && <span className="absolute top-0.5 end-1 text-[10px]">✓</span>}
-            </button>
-          )
-        })}
+              <span dir="ltr">{memInSection} / {realCount} · {pct}%</span>
+            </span>
+          )}
+        </div>
+
+        {!isDua && realCount > 0 && (
+          <div className="h-1.5 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden mb-4">
+            <div
+              className="h-full transition-all duration-700"
+              style={{
+                width: `${pct}%`,
+                background: isGold
+                  ? 'linear-gradient(90deg, var(--color-gold-soft), var(--color-gold))'
+                  : 'linear-gradient(90deg, var(--color-teal-soft), var(--color-teal))',
+              }}
+            />
+          </div>
+        )}
+
+        <div className={gridClass}>
+          {names.map((n) => {
+            const isMem = memorized.has(n.id)
+            return (
+              <button
+                key={n.id} type="button" onClick={() => onOpen(n.id)}
+                className={
+                  'relative rounded-xl font-serif font-bold text-center transition-all border-2 ' +
+                  (variant === 'dua' ? 'text-sm px-3 py-3' : 'text-sm sm:text-base py-3 sm:py-3.5') + ' ' +
+                  (isMem
+                    ? (isGold
+                        ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)]'
+                        : 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]')
+                    : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:-translate-y-0.5 hover:shadow-sm')
+                }
+              >
+                {n.name}
+                {isMem && <span className="absolute top-1 end-1.5 text-[10px]">✓</span>}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
