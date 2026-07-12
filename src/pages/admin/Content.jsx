@@ -112,13 +112,13 @@ function NameEditor({ name }) {
   // Sync form when Firestore updates (e.g. from another tab)
   useEffect(() => {
     setForm(emptyForm(name))
-  }, [name.id, name.meaning, name.thanaa, name.talab, name.evidence,
-      name.meaningEn, name.thanaaEn, name.talabEn, name.evidenceEn])
+  }, [name.id, name.meaning, name.thanaa, name.talab, name.taabbud, name.evidence,
+      name.meaningEn, name.thanaaEn, name.talabEn, name.taabbudEn, name.evidenceEn])
 
   const dirty = FIELDS_ALL.some((f) => form[f] !== (name[f] || ''))
 
   // Has any English content been added?
-  const hasEn = ['meaningEn', 'thanaaEn', 'talabEn', 'evidenceEn'].some((f) => (name[f] || '').trim())
+  const hasEn = ['meaningEn', 'thanaaEn', 'talabEn', 'taabbudEn', 'evidenceEn'].some((f) => (name[f] || '').trim())
 
   const save = async () => {
     setSaving(true)
@@ -171,16 +171,20 @@ function NameEditor({ name }) {
 
           {tab === 'ar' ? (
             <div dir="rtl">
-              <Field label="المعنى" value={form.meaning} onChange={(v) => setForm({ ...form, meaning: v })} />
-              <Field label="الثناء" value={form.thanaa}  onChange={(v) => setForm({ ...form, thanaa: v })} />
-              <Field label="الطلب"  value={form.talab}   onChange={(v) => setForm({ ...form, talab: v })} />
+              <Field label="① المعنى — أعرف الاسم" value={form.meaning} onChange={(v) => setForm({ ...form, meaning: v })} />
+              <Field label="② الثناء — أثني على الله به" value={form.thanaa}  onChange={(v) => setForm({ ...form, thanaa: v })} />
+              <Field label="③ الطلب — أدعو الله به"  value={form.talab}   onChange={(v) => setForm({ ...form, talab: v })} />
+              <Field label="④ التعبد — أتعبد بمقتضاه" value={form.taabbud} onChange={(v) => setForm({ ...form, taabbud: v })}
+                     hint="ما الأثر في القلب والسلوك؟ سطر أو سطران." />
               <Field label="الدليل (اختياري)" value={form.evidence} onChange={(v) => setForm({ ...form, evidence: v })} />
             </div>
           ) : (
             <div dir="ltr">
-              <Field label="Meaning"      value={form.meaningEn}  onChange={(v) => setForm({ ...form, meaningEn: v })} placeholder={form.meaning}  />
-              <Field label="Praise"       value={form.thanaaEn}   onChange={(v) => setForm({ ...form, thanaaEn: v })}  placeholder={form.thanaa}   />
-              <Field label="Supplication" value={form.talabEn}    onChange={(v) => setForm({ ...form, talabEn: v })}   placeholder={form.talab}    />
+              <Field label="① Meaning — Know the Name"       value={form.meaningEn}  onChange={(v) => setForm({ ...form, meaningEn: v })} placeholder={form.meaning}  />
+              <Field label="② Praise — Praise Him with it"   value={form.thanaaEn}   onChange={(v) => setForm({ ...form, thanaaEn: v })}  placeholder={form.thanaa}   />
+              <Field label="③ Supplication — Ask Him by it"  value={form.talabEn}    onChange={(v) => setForm({ ...form, talabEn: v })}   placeholder={form.talab}    />
+              <Field label="④ Embodiment — Live by its meaning" value={form.taabbudEn} onChange={(v) => setForm({ ...form, taabbudEn: v })} placeholder={form.taabbud}
+                     hint="What changes in the heart and behavior? One or two lines." />
               <Field label="Evidence (optional)" value={form.evidenceEn} onChange={(v) => setForm({ ...form, evidenceEn: v })} placeholder={form.evidence} />
               <p className="text-[11px] text-[color:var(--color-ink-mute)] mt-1">
                 إذا تُركت الحقول فارغة يعرض الموقع النسخة العربية بدلاً منها.
@@ -206,7 +210,10 @@ function NameEditor({ name }) {
   )
 }
 
-const FIELDS_ALL = ['meaning', 'thanaa', 'talab', 'evidence', 'meaningEn', 'thanaaEn', 'talabEn', 'evidenceEn']
+const FIELDS_ALL = [
+  'meaning', 'thanaa', 'talab', 'taabbud', 'evidence',
+  'meaningEn', 'thanaaEn', 'talabEn', 'taabbudEn', 'evidenceEn',
+]
 
 function emptyForm(name) {
   const f = {}
@@ -227,7 +234,7 @@ function TabBtn({ active, onClick, children }) {
   )
 }
 
-function Field({ label, value, onChange, placeholder }) {
+function Field({ label, value, onChange, placeholder, hint }) {
   return (
     <div className="mb-3">
       <label className="block text-xs font-bold text-[color:var(--color-ink-soft)] mb-1">{label}</label>
@@ -238,6 +245,7 @@ function Field({ label, value, onChange, placeholder }) {
         rows={2}
         className="w-full px-3 py-2 rounded-lg border border-[color:var(--color-cream-deep)] bg-white text-sm text-[color:var(--color-ink)] focus:border-[color:var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-gold-soft)] transition resize-y"
       />
+      {hint && <p className="text-[11px] text-[color:var(--color-ink-mute)] mt-1">{hint}</p>}
     </div>
   )
 }
