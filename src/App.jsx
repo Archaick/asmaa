@@ -16,11 +16,8 @@ const Achievements        = lazy(() => import('./pages/student/Achievements'))
 const Journey             = lazy(() => import('./pages/student/Journey'))
 const Welcome             = lazy(() => import('./pages/student/Welcome'))
 const Curriculum          = lazy(() => import('./pages/student/Curriculum'))
-const Course              = lazy(() => import('./pages/student/Course'))
-const Lesson              = lazy(() => import('./pages/student/Lesson'))
+const BouquetLesson       = lazy(() => import('./pages/student/BouquetLesson'))
 const AdminCurriculum     = lazy(() => import('./pages/admin/Curriculum'))
-const AdminCourseEdit     = lazy(() => import('./pages/admin/CourseEdit'))
-const AdminLessonEdit     = lazy(() => import('./pages/admin/LessonEdit'))
 const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'))
 const AdminStudents       = lazy(() => import('./pages/admin/Students'))
 const AdminStudentDetail  = lazy(() => import('./pages/admin/StudentDetail'))
@@ -87,18 +84,10 @@ export default function App() {
                 }
               />
               <Route
-                path="/curriculum/:courseId"
+                path="/lesson/:bouquetId"
                 element={
                   <ProtectedRoute>
-                    <Course />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/curriculum/:courseId/:lessonId"
-                element={
-                  <ProtectedRoute>
-                    <Lesson />
+                    <BouquetLesson />
                   </ProtectedRoute>
                 }
               />
@@ -147,22 +136,6 @@ export default function App() {
                 element={
                   <ProtectedRoute requireRole="admin">
                     <AdminCurriculum />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/curriculum/:courseId"
-                element={
-                  <ProtectedRoute requireRole="admin">
-                    <AdminCourseEdit />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/curriculum/:courseId/lessons/:lessonId"
-                element={
-                  <ProtectedRoute requireRole="admin">
-                    <AdminLessonEdit />
                   </ProtectedRoute>
                 }
               />

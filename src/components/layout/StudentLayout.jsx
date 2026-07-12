@@ -3,7 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useProgress } from '../../hooks/useProgress'
 import { useMilestones } from '../../hooks/useMilestones'
-import { useLessonProgress } from '../../hooks/useLessonProgress'
+import { useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
 import { useLang } from '../../i18n/LangContext'
 import { TOTAL_NAMES } from '../../data/bouquets'
 import { playChime, isSoundEnabled, setSoundEnabled } from '../../utils/chime'
@@ -12,7 +12,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
   const { user, signOut } = useAuth()
   const { memorizedCount, entries, memorized } = useProgress()
   const { milestones, streak } = useMilestones(entries, memorized, memorizedCount)
-  const { completedCount: lessonsCompleted } = useLessonProgress()
+  const { completedCount: lessonsCompleted } = useBouquetLessonProgress()
   const { t, lang, toggle: toggleLang } = useLang()
   const [sound, setSound] = useState(() => isSoundEnabled())
   const [menuOpen, setMenuOpen] = useState(false)

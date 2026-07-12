@@ -1,0 +1,136 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { collection, doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
+import { useAuth } from '../context/AuthContext'
+import { BOUQUETS } from '../data/bouquets'
+
+// One bouquet-lesson per bouquet — 9 total, fixed.
+// A Firestore doc /bouquetLessons/{bouquetId} stores admin-editable state:
+//   { published, introAr, introEn, outroAr, outroEn, questionTypes, ... }
+// If a doc doesn't exist, we fall back to sane defaults (unpublished draft).
+export function useBouquetLessons({ publishedOnly = false } = {}) {
+  const [docs, setDocs] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, 'bouquetLessons'),
+      (snap) => {
+        const m = {}
+        snap.forEach((d) => { m[d.id] = d.data() })
+        setDocs(m)
+        setLoading(false)
+      },
+      (err) => {
+        console.warn('[useBouquetLessons] fallback to defaults:', err?.message)
+        setDocs({})
+        setLoading(false)
+      }
+    )
+    return unsub
+  }, [])
+
+  const lessons = useMemo(() => {
+    const list = BOUQUETS.map((b) => {
+      const d = docs[b.id] || {}
+      return {
+        id: b.id,
+        bouquet: b,
+        published: !!d.published,
+        introAr: d.introAr || '',
+        introEn: d.introEn || '',
+        outroAr: d.outroAr || '',
+        outroEn: d.outroEn || '',
+        questionTypes: d.questionTypes || DEFAULT_QUESTION_TYPES,
+      }
+    })
+    return publishedOnly ? list.filter((l) => l.published) : list
+  }, [docs, publishedOnly])
+
+  return { lessons, loading }
+}
+
+// Admin: upsert a bouquet lesson doc.
+export async function saveBouquetLesson(bouquetId, payload) {
+  await setDoc(
+    doc(db, 'bouquetLessons', bouquetId),
+    { ...payload, updatedAt: serverTimestamp() },
+    { merge: true }
+  )
+}
+
+// Per-user progress on bouquet lessons: /users/{uid}/bouquetLessons/{bouquetId}
+// Tracks the current step in the template + whether the lesson has been sealed.
+export function useBouquetLessonProgress() {
+  const { user } = useAuth()
+  const [byId, setById] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) { setById({}); setLoading(false); return }
+    const unsub = onSnapshot(
+      collection(db, 'users', user.uid, 'bouquetLessons'),
+      (snap) => {
+        const m = {}
+        snap.forEach((d) => { m[d.id] = d.data() })
+        setById(m)
+        setLoading(false)
+      },
+      (err) => {
+        console.error('[useBouquetLessonProgress] subscribe failed:', err)
+        setLoading(false)
+      }
+    )
+    return unsub
+  }, [user])
+
+  const isCompleted = useCallback((bouquetId) => !!byId[bouquetId]?.completed, [byId])
+  const getStep = useCallback((bouquetId) => byId[bouquetId]?.step ?? 0, [byId])
+
+  const saveStep = useCallback(async (bouquetId, step) => {
+    if (!user) return
+    await setDoc(
+      doc(db, 'users', user.uid, 'bouquetLessons', bouquetId),
+      { step, updatedAt: serverTimestamp() },
+      { merge: true }
+    )
+  }, [user])
+
+  const markCompleted = useCallback(async (bouquetId) => {
+    if (!user) return
+    await setDoc(
+      doc(db, 'users', user.uid, 'bouquetLessons', bouquetId),
+      { completed: true, completedAt: serverTimestamp(), updatedAt: serverTimestamp() },
+      { merge: true }
+    )
+  }, [user])
+
+  const completedCount = useMemo(
+    () => Object.values(byId).filter((e) => e.completed).length,
+    [byId]
+  )
+
+  return { byId, isCompleted, getStep, saveStep, markCompleted, completedCount, loading }
+}
+
+export const DEFAULT_QUESTION_TYPES = {
+  textMatch: true,
+  textWhich: true,
+  textFillBlank: true,
+  textThanaaOrTalab: true,
+  audioWhich: false,
+  audioMatch: false,
+  drawTrace: false,
+  drawCircle: false,
+}
+
+export const QUESTION_TYPE_META = [
+  { key: 'textMatch',        label: 'صِل الاسم بمعناه',      category: 'text' },
+  { key: 'textWhich',        label: 'من هو الاسم؟',          category: 'text' },
+  { key: 'textFillBlank',    label: 'أكمل العبارة',         category: 'text' },
+  { key: 'textThanaaOrTalab', label: 'ثناء أم طلب؟',        category: 'text' },
+  { key: 'audioWhich',       label: 'اسمع ثم اختر',          category: 'audio' },
+  { key: 'audioMatch',       label: 'صِل بالسماع',           category: 'audio' },
+  { key: 'drawTrace',        label: 'ارسم الاسم',            category: 'draw' },
+  { key: 'drawCircle',       label: 'دوّر على الاسم',        category: 'draw' },
+]
