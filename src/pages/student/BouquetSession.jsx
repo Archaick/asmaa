@@ -112,7 +112,7 @@ export default function BouquetSession() {
 
   return (
     <StudentLayout backTo="/memorize">
-      <div className="py-6 sm:py-8">
+      <div className="py-6 sm:py-8 overflow-x-hidden">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           {/* Bouquet header */}
           <div className="text-center mb-6">
@@ -175,7 +175,7 @@ export default function BouquetSession() {
                   type="button"
                   onClick={() => setOpenId(n.id)}
                   className={
-                    'relative rounded-2xl font-serif font-bold text-center transition-all border-2 py-6 sm:py-8 text-lg sm:text-xl animate-fade-in-up ' +
+                    'relative min-w-0 rounded-2xl font-serif font-bold text-center transition-all border-2 px-1 py-5 sm:py-8 text-base sm:text-xl animate-fade-in-up ' +
                     (isMem
                       ? (isGold
                           ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)]'
@@ -249,8 +249,8 @@ export default function BouquetSession() {
 
 function gridClassFor(bouquet) {
   if (bouquet.isDua) return 'grid grid-cols-1 sm:grid-cols-2 gap-3'
-  if (bouquet.id === 'khitam') return 'grid grid-cols-2 sm:grid-cols-4 gap-3'
-  if (bouquet.id === 'famous') return 'grid grid-cols-5 gap-2 sm:gap-3'
+  if (bouquet.id === 'khitam') return 'grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3'
+  // famous + middle bouquets: 3 cols on mobile keeps names readable, 5 on sm+
   return 'grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3'
 }
 
