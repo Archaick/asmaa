@@ -127,7 +127,17 @@ export default function BouquetLesson() {
         {/* Progress bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs font-bold text-[color:var(--color-ink-soft)] mb-1.5">
-            <span>{t('lesson.step')} {step + 1} / {totalSteps}</span>
+            <span>
+              {t('lesson.step')} {step + 1} / {totalSteps}
+              <span className="text-[color:var(--color-ink-mute)]"> · </span>
+              <span className="text-[color:var(--color-ink)]">
+                {step === openingIdx     ? t('lesson.phase.opening')
+                : activeName             ? `${t('lesson.phase.name')} · ${activeName.name}`
+                : step === practiceIdx   ? `🎯 ${t('lesson.phase.practice')}`
+                : step === closingIdx    ? t('lesson.phase.closing')
+                : ''}
+              </span>
+            </span>
             <span dir="ltr">{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
           <div className="h-2 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden">
