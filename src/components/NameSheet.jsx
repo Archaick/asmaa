@@ -11,6 +11,8 @@ import { useLang } from '../i18n/LangContext'
 //   • Big, gold, top of the modal — never hidden.
 //   • Every transition between names has a gentle pop so it feels playful,
 //     not clinical.
+const PETALS = 10
+
 export default function NameSheet({ name, isMemorized, onClose, onAdvance, onNav }) {
   const { t, lang } = useLang()
   const [glowing, setGlowing] = useState(false)
@@ -40,9 +42,9 @@ export default function NameSheet({ name, isMemorized, onClose, onAdvance, onNav
     if (name.isDua) { onClose?.(); return }
     if (!isMemorized) {
       setGlowing(true)
-      // Give the glow a beat to be seen, then advance and let the next name
-      // bloom in — feels like a satisfying commitment moment, not a snap.
-      setTimeout(() => onAdvance?.(), 340)
+      // Give the glow + petal burst a beat to be seen, then advance and let
+      // the next name bloom in — a commitment moment, not a snap.
+      setTimeout(() => onAdvance?.(), 480)
     } else {
       onAdvance?.()
     }
@@ -89,7 +91,31 @@ export default function NameSheet({ name, isMemorized, onClose, onAdvance, onNav
 
           {/* Primary action — memorize + advance in one, top of content */}
           {!name.isDua && (
-            <div className="mb-7">
+            <div className="mb-7 relative">
+              {/* Gold petal burst on commit */}
+              {glowing && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-10">
+                  {Array.from({ length: PETALS }).map((_, i) => {
+                    const angle = (Math.PI * 2 * i) / PETALS
+                    const dist = 60 + (i % 3) * 22
+                    return (
+                      <span
+                        key={i}
+                        className="absolute animate-petal-out text-lg"
+                        style={{
+                          '--dx': `${Math.cos(angle) * dist}px`,
+                          '--dy': `${Math.sin(angle) * dist - 20}px`,
+                          '--rot': `${(i % 2 ? 1 : -1) * (40 + i * 12)}deg`,
+                          color: i % 3 === 0 ? 'var(--color-gold-deep)' : i % 3 === 1 ? 'var(--color-gold)' : 'var(--color-teal)',
+                          animationDelay: `${(i % 4) * 40}ms`,
+                        }}
+                      >
+                        {i % 2 === 0 ? '✿' : '✦'}
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
               {isMemorized ? (
                 <button
                   type="button"

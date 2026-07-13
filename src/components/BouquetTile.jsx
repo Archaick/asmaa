@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { useLang } from '../i18n/LangContext'
 
 export default function BouquetTile({ bouquet, memorizedCount, total, complete }) {
@@ -42,17 +43,9 @@ export default function BouquetTile({ bouquet, memorizedCount, total, complete }
           <span dir="ltr">{memorizedCount} / {total}</span>
           <span dir="ltr">{pct}%</span>
         </div>
-        <div className="h-2 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden mb-5">
-          <div
-            className="h-full transition-all duration-700 ease-out"
-            style={{
-              width: `${pct}%`,
-              background: isGold
-                ? 'linear-gradient(90deg, var(--color-gold-soft), var(--color-gold))'
-                : 'linear-gradient(90deg, var(--color-teal-soft), var(--color-teal))',
-            }}
-          />
-        </div>
+
+        {/* The bouquet blooms — one flower per memorized name */}
+        <FlowerStrip count={total} bloomed={memorizedCount} isGold={isGold} />
 
         <div
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white transition-transform group-hover:-translate-x-1"
@@ -62,5 +55,49 @@ export default function BouquetTile({ bouquet, memorizedCount, total, complete }
         </div>
       </div>
     </Link>
+  )
+}
+
+// A strip of buds that bloom into flowers as names are memorized.
+// The most recently bloomed flower pops in with a small bloom animation.
+function FlowerStrip({ count, bloomed, isGold }) {
+  const prevBloomedRef = useRef(bloomed)
+  const [justBloomed, setJustBloomed] = useState(-1)
+
+  useEffect(() => {
+    if (bloomed > prevBloomedRef.current) {
+      setJustBloomed(bloomed - 1)
+      const to = setTimeout(() => setJustBloomed(-1), 700)
+      prevBloomedRef.current = bloomed
+      return () => clearTimeout(to)
+    }
+    prevBloomedRef.current = bloomed
+  }, [bloomed])
+
+  if (count <= 0) return null
+
+  const color = isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)'
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 mb-5" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => {
+        const isBloomed = i < bloomed
+        return (
+          <span
+            key={i}
+            className={
+              'inline-flex items-center justify-center w-5 h-5 text-sm leading-none select-none transition-all duration-300 ' +
+              (i === justBloomed ? 'animate-flower-bloom' : '')
+            }
+            style={{
+              color: isBloomed ? color : 'var(--color-cream-deep)',
+              transform: isBloomed ? 'none' : 'scale(0.8)',
+            }}
+          >
+            {isBloomed ? '✿' : '❀'}
+          </span>
+        )
+      })}
+    </div>
   )
 }

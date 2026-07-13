@@ -302,6 +302,28 @@ body {
   animation: crown-shimmer 2.4s ease-in-out infinite;
 }
 
+/* ── Memorize-moment petal burst (NameSheet) ─────────── */
+
+@keyframes petal-out {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -40px)) scale(1.1) rotate(var(--rot, 0deg)); }
+}
+.animate-petal-out {
+  animation: petal-out 0.8s cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
+}
+
+/* ── Blooming bouquet flowers (BouquetTile) ──────────── */
+
+@keyframes flower-bloom {
+  0%   { opacity: 0; transform: scale(0.2) rotate(-30deg); }
+  60%  { opacity: 1; transform: scale(1.25) rotate(8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.animate-flower-bloom {
+  animation: flower-bloom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* Reveal on scroll — used by useInView-gated elements */
 .reveal-hidden {
   opacity: 0;
