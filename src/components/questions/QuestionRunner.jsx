@@ -62,7 +62,14 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
       <div className="p-8 rounded-3xl bg-white border border-dashed border-[color:var(--color-cream-deep)] text-center">
         <div className="text-5xl mb-3">🎯</div>
         <h2 className="font-display text-xl font-bold text-[color:var(--color-ink)] mb-2">{t('practice.empty.title')}</h2>
-        <p className="text-sm text-[color:var(--color-ink-soft)]">{t('practice.empty.hint')}</p>
+        <p className="text-sm text-[color:var(--color-ink-soft)] mb-5">{t('practice.empty.hint')}</p>
+        <button
+          type="button"
+          onClick={onComplete}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] active:scale-[0.97] transition-all"
+        >
+          {t('practice.summary.continue')} ←
+        </button>
       </div>
     )
   }

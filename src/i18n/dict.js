@@ -310,6 +310,7 @@ export const dict = {
     'lesson.practice_placeholder': 'تمارين تفاعلية على أسماء هذه الباقة — قريباً — بأسلوب Duolingo (اختيارات، مطابقة، سماع، ورسم).',
     'lesson.practice_types_hint': 'أنواع مُفعَّلة',
     'lesson.taabbud_missing': 'قيد الإعداد — سيُضيفه المشرف قريباً.',
+    'lesson.practice_gate_hint': 'أنجز التمارين لتنتقل إلى الحديث الختامي',
 
     // Practice engine (Duolingo-style questions)
     'practice.type.mc': 'اختيار من متعدد',
@@ -649,6 +650,7 @@ export const dict = {
     'lesson.practice_placeholder': "Interactive drills on this bouquet's names — coming soon — Duolingo-style multiple choice, matching, listening, and tracing.",
     'lesson.practice_types_hint': 'Enabled types',
     'lesson.taabbud_missing': 'Under preparation — the admin will add this soon.',
+    'lesson.practice_gate_hint': 'Finish the practice to reach the closing hadith',
 
     // Practice engine
     'practice.type.mc': 'Multiple choice',

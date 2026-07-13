@@ -139,7 +139,8 @@ export default function BouquetLesson() {
           )}
         </div>
 
-        {/* Bottom nav */}
+        {/* Bottom nav — on the practice step the runner owns advancement,
+             so no Next button here to bypass the questions. */}
         <div className="mt-8 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -149,18 +150,24 @@ export default function BouquetLesson() {
           >
             → {t('lesson.prev')}
           </button>
-          <button
-            type="button"
-            onClick={goNext}
-            className={
-              'px-6 py-3 rounded-2xl text-sm font-bold transition ' +
-              (step === closingIdx
-                ? 'bg-[color:var(--color-gold-deep)] text-white hover:bg-[color:var(--color-gold)] '
-                : 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)]')
-            }
-          >
-            {step === closingIdx ? t('lesson.seal') : t('lesson.next')} ←
-          </button>
+          {step !== practiceIdx ? (
+            <button
+              type="button"
+              onClick={goNext}
+              className={
+                'px-6 py-3 rounded-2xl text-sm font-bold transition ' +
+                (step === closingIdx
+                  ? 'bg-[color:var(--color-gold-deep)] text-white hover:bg-[color:var(--color-gold)] '
+                  : 'bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)]')
+              }
+            >
+              {step === closingIdx ? t('lesson.seal') : t('lesson.next')} ←
+            </button>
+          ) : (
+            <span className="text-[11px] text-[color:var(--color-ink-mute)] italic max-w-[60%] text-end leading-relaxed">
+              {t('lesson.practice_gate_hint')}
+            </span>
+          )}
         </div>
       </div>
 
