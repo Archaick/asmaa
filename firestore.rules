@@ -48,6 +48,13 @@ service cloud.firestore {
     match /bouquetLessons/{bouquetId} {
       allow read:  if request.auth != null;
       allow write: if isAdmin();
+
+      // Practice questions per lesson (multiple choice / true-false / word
+      // pair / trace). Signed-in users read; only admin edits.
+      match /questions/{questionId} {
+        allow read:  if request.auth != null;
+        allow write: if isAdmin();
+      }
     }
 
     // Per-user bouquet-lesson progress: { step, completed, completedAt }.

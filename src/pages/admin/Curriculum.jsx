@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
 import {
   useBouquetLessons, saveBouquetLesson,
@@ -131,9 +132,17 @@ function LessonRow({ lesson, nameCount }) {
             )}
           </div>
           <div className="text-xs text-[color:var(--color-ink-soft)] mt-0.5">
-            {enabledTypeCount} نوع تمرين مُفعَّل
+            نصّ ومحتوى الدرس
           </div>
         </div>
+
+        <Link
+          to={`/admin/curriculum/${lesson.id}/questions`}
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[color:var(--color-gold-soft)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:bg-[color:var(--color-cream-warm)] transition"
+        >
+          🎯 التمارين
+        </Link>
 
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
              className={'shrink-0 transition-transform text-[color:var(--color-ink-mute)] ' + (expanded ? 'rotate-180' : '')}>

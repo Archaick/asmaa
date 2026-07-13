@@ -18,6 +18,7 @@ const Welcome             = lazy(() => import('./pages/student/Welcome'))
 const Curriculum          = lazy(() => import('./pages/student/Curriculum'))
 const BouquetLesson       = lazy(() => import('./pages/student/BouquetLesson'))
 const AdminCurriculum     = lazy(() => import('./pages/admin/Curriculum'))
+const AdminBouquetQs      = lazy(() => import('./pages/admin/BouquetLessonQuestions'))
 const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'))
 const AdminStudents       = lazy(() => import('./pages/admin/Students'))
 const AdminStudentDetail  = lazy(() => import('./pages/admin/StudentDetail'))
@@ -136,6 +137,14 @@ export default function App() {
                 element={
                   <ProtectedRoute requireRole="admin">
                     <AdminCurriculum />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/curriculum/:bouquetId/questions"
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminBouquetQs />
                   </ProtectedRoute>
                 }
               />
