@@ -319,23 +319,50 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
   const [wrongFlash, setWrongFlash] = useState(null) // { nameId, valueId }
   const [attempts, setAttempts] = useState(0)
   const [wrongAttempts, setWrongAttempts] = useState(0)
+  const [lines, setLines] = useState([]) // [{ id, x1, y1, x2, y2 }]
+
+  // Refs to compute connector line endpoints per matched pair.
+  const gridRef = useRef(null)
+  const nameRefs = useRef({})
+  const valueRefs = useRef({})
+  const setNameRef = (id) => (el) => { if (el) nameRefs.current[id] = el }
+  const setValueRef = (id) => (el) => { if (el) valueRefs.current[id] = el }
 
   useEffect(() => {
     setSelectedName(null); setMatched({}); setWrongFlash(null)
-    setAttempts(0); setWrongAttempts(0)
+    setAttempts(0); setWrongAttempts(0); setLines([])
   }, [question.id])
 
   // Detect completion
   useEffect(() => {
     if (answered) return
-    if (names.length > 0 && Object.keys(matched).length === names.length) {
-      // Small delay so student sees the last pair lock in
+    if (names.length > 0 && Object.keys(matched).length === names.length * 2) {
+      // Small delay so the last connector line finishes drawing before feedback
       const to = setTimeout(() => {
         onAnswer(wrongAttempts === 0)
-      }, 400)
+      }, 550)
       return () => clearTimeout(to)
     }
   }, [matched, names.length, answered, wrongAttempts])
+
+  // Adds a connector line between the two matched boxes. Coordinates are
+  // relative to the grid container so the SVG can position them cleanly.
+  const addLine = (nameId, valueId) => {
+    const grid = gridRef.current
+    const nameEl = nameRefs.current[nameId]
+    const valueEl = valueRefs.current[valueId]
+    if (!grid || !nameEl || !valueEl) return
+    const gr = grid.getBoundingClientRect()
+    const nr = nameEl.getBoundingClientRect()
+    const vr = valueEl.getBoundingClientRect()
+    // Names live in the RTL-first (right) column, values in the second (left).
+    // Line runs from the name box's LEFT edge to the value box's RIGHT edge.
+    const x1 = nr.left  - gr.left
+    const y1 = nr.top   - gr.top + nr.height / 2
+    const x2 = vr.right - gr.left
+    const y2 = vr.top   - gr.top + vr.height / 2
+    setLines((prev) => [...prev, { id: `${nameId}-${valueId}`, x1, y1, x2, y2 }])
+  }
 
   const onPickName = (nameId) => {
     if (answered || matched[nameId]) return
@@ -347,8 +374,9 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
     if (matched[valueId] || matched[selectedName]) return
     setAttempts((a) => a + 1)
     if (selectedName === valueId) {
-      // correct match
-      setMatched((m) => ({ ...m, [selectedName]: true, [valueId]: true }))
+      const pickedName = selectedName
+      addLine(pickedName, valueId)
+      setMatched((m) => ({ ...m, [pickedName]: true, [valueId]: true }))
       setSelectedName(null)
       playChime()
     } else {
@@ -368,9 +396,32 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         {t('practice.wp.hint')}
       </h3>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div ref={gridRef} className="relative grid grid-cols-2 gap-3">
+        {/* Connector lines overlay — drawn top of columns, ignores clicks */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ zIndex: 5, overflow: 'visible' }}
+          aria-hidden="true"
+        >
+          {lines.map((line) => {
+            const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1)
+            return (
+              <line
+                key={line.id}
+                x1={line.x1} y1={line.y1}
+                x2={line.x2} y2={line.y2}
+                stroke="var(--color-teal-deep)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                className="animate-pair-line"
+                style={{ strokeDasharray: length, strokeDashoffset: length }}
+              />
+            )
+          })}
+        </svg>
+
         {/* Names column */}
-        <div className="space-y-2">
+        <div className="space-y-2 relative" style={{ zIndex: 1 }}>
           {names.map((n) => {
             const isMatched = matched[n.id]
             const isSelected = selectedName === n.id
@@ -378,13 +429,14 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
             return (
               <button
                 key={n.id}
+                ref={setNameRef(n.id)}
                 type="button"
                 onClick={() => onPickName(n.id)}
                 disabled={answered || isMatched}
                 className={
                   'w-full py-3 px-2 rounded-xl font-serif text-base font-bold border-2 transition ' +
                   (isMatched
-                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)] opacity-70'
+                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]'
                     : isWrong
                       ? 'bg-red-50 border-red-400 text-red-900'
                       : isSelected
@@ -399,20 +451,21 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         </div>
 
         {/* Values column */}
-        <div className="space-y-2">
+        <div className="space-y-2 relative" style={{ zIndex: 1 }}>
           {shuffledValues.map((v) => {
             const isMatched = matched[v.id]
             const isWrong = wrongFlash?.valueId === v.id
             return (
               <button
                 key={v.id}
+                ref={setValueRef(v.id)}
                 type="button"
                 onClick={() => onPickValue(v.id)}
                 disabled={answered || isMatched}
                 className={
                   'w-full py-3 px-3 rounded-xl text-xs sm:text-sm font-semibold border-2 transition text-start leading-snug ' +
                   (isMatched
-                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)] opacity-70'
+                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]'
                     : isWrong
                       ? 'bg-red-50 border-red-400 text-red-900'
                       : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold-soft)]')
