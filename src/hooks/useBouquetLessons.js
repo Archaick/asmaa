@@ -41,7 +41,6 @@ export function useBouquetLessons({ publishedOnly = false } = {}) {
         introEn: d.introEn || '',
         outroAr: d.outroAr || '',
         outroEn: d.outroEn || '',
-        questionTypes: d.questionTypes || DEFAULT_QUESTION_TYPES,
       }
     })
     return publishedOnly ? list.filter((l) => l.published) : list
@@ -113,24 +112,3 @@ export function useBouquetLessonProgress() {
   return { byId, isCompleted, getStep, saveStep, markCompleted, completedCount, loading }
 }
 
-export const DEFAULT_QUESTION_TYPES = {
-  textMatch: true,
-  textWhich: true,
-  textFillBlank: true,
-  textThanaaOrTalab: true,
-  audioWhich: false,
-  audioMatch: false,
-  drawTrace: false,
-  drawCircle: false,
-}
-
-export const QUESTION_TYPE_META = [
-  { key: 'textMatch',        label: 'صِل الاسم بمعناه',      category: 'text' },
-  { key: 'textWhich',        label: 'من هو الاسم؟',          category: 'text' },
-  { key: 'textFillBlank',    label: 'أكمل العبارة',         category: 'text' },
-  { key: 'textThanaaOrTalab', label: 'ثناء أم طلب؟',        category: 'text' },
-  { key: 'audioWhich',       label: 'اسمع ثم اختر',          category: 'audio' },
-  { key: 'audioMatch',       label: 'صِل بالسماع',           category: 'audio' },
-  { key: 'drawTrace',        label: 'ارسم الاسم',            category: 'draw' },
-  { key: 'drawCircle',       label: 'دوّر على الاسم',        category: 'draw' },
-]

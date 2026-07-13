@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
-import {
-  useBouquetLessons, saveBouquetLesson,
-  DEFAULT_QUESTION_TYPES, QUESTION_TYPE_META,
-} from '../../hooks/useBouquetLessons'
+import { useBouquetLessons, saveBouquetLesson } from '../../hooks/useBouquetLessons'
 import { useNames } from '../../hooks/useNames'
 
 // New admin الدورات: fixed 9 bouquet lessons (one per bouquet in the sheikh's method).
@@ -55,7 +52,6 @@ function LessonRow({ lesson, nameCount }) {
 
   useEffect(() => { setForm(toForm(lesson)) }, [
     lesson.introAr, lesson.introEn, lesson.outroAr, lesson.outroEn,
-    JSON.stringify(lesson.questionTypes),
   ])
 
   // "dirty" only for the content fields — publish has its own instant toggle below.
@@ -63,8 +59,7 @@ function LessonRow({ lesson, nameCount }) {
     form.introAr !== lesson.introAr ||
     form.introEn !== lesson.introEn ||
     form.outroAr !== lesson.outroAr ||
-    form.outroEn !== lesson.outroEn ||
-    JSON.stringify(form.questionTypes) !== JSON.stringify(lesson.questionTypes)
+    form.outroEn !== lesson.outroEn
 
   const b = lesson.bouquet
   const isGold = b.color === 'gold'
@@ -87,13 +82,10 @@ function LessonRow({ lesson, nameCount }) {
         introEn: form.introEn,
         outroAr: form.outroAr,
         outroEn: form.outroEn,
-        questionTypes: form.questionTypes,
       })
       setSavedFlash(true); setTimeout(() => setSavedFlash(false), 1500)
     } catch (e) { setError(e?.message || 'فشل الحفظ') } finally { setSaving(false) }
   }
-
-  const enabledTypeCount = Object.values(form.questionTypes).filter(Boolean).length
 
   return (
     <li className="rounded-2xl bg-white border border-[color:var(--color-cream-deep)] overflow-hidden">
@@ -132,7 +124,7 @@ function LessonRow({ lesson, nameCount }) {
             )}
           </div>
           <div className="text-xs text-[color:var(--color-ink-soft)] mt-0.5">
-            نصّ ومحتوى الدرس
+            المقدّمة والخاتمة · التمارين تُحرَّر من صفحة 🎯 التمارين
           </div>
         </div>
 
@@ -224,42 +216,6 @@ function LessonRow({ lesson, nameCount }) {
             </div>
           )}
 
-          {/* Question type toggles */}
-          <div className="mt-5" dir="rtl">
-            <div className="font-bold text-sm text-[color:var(--color-ink)] mb-2">أنواع التمارين في كتلة التطبيق</div>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {QUESTION_TYPE_META.map((q) => {
-                const checked = !!form.questionTypes[q.key]
-                return (
-                  <label
-                    key={q.key}
-                    className={
-                      'flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition text-sm ' +
-                      (checked
-                        ? 'border-[color:var(--color-gold)] bg-white'
-                        : 'border-[color:var(--color-cream-deep)] bg-white/60 hover:bg-white')
-                    }
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => setForm({
-                        ...form,
-                        questionTypes: { ...form.questionTypes, [q.key]: e.target.checked },
-                      })}
-                      className="w-4 h-4 shrink-0"
-                    />
-                    <span className="flex-1 text-[color:var(--color-ink)]">{q.label}</span>
-                    <span className="text-[10px] font-bold text-[color:var(--color-ink-mute)]">{q.category}</span>
-                  </label>
-                )
-              })}
-            </div>
-            <p className="text-[11px] text-[color:var(--color-ink-mute)] mt-2">
-              كتلة التطبيق قيد التطوير — التمارين ستُولَّد تلقائياً من هذه الأنواع باستخدام بيانات الأسماء.
-            </p>
-          </div>
-
           {error && <div className="mt-3 text-sm text-red-700">{error}</div>}
 
           <div className="mt-4 flex items-center justify-between gap-2" dir="rtl">
@@ -319,6 +275,5 @@ function toForm(lesson) {
     introEn: lesson.introEn || '',
     outroAr: lesson.outroAr || '',
     outroEn: lesson.outroEn || '',
-    questionTypes: { ...DEFAULT_QUESTION_TYPES, ...(lesson.questionTypes || {}) },
   }
 }

@@ -340,7 +340,6 @@ function Verb({ num, icon, label, verb, text, accent, fallback }) {
 }
 
 function PracticeScene({ bouquet, lesson, t }) {
-  const enabledTypes = Object.entries(lesson?.questionTypes || {}).filter(([, v]) => v).length
   return (
     <div className="p-8 rounded-3xl bg-white border border-dashed border-[color:var(--color-cream-deep)] text-center">
       <div className="text-5xl mb-3">🎯</div>
@@ -351,7 +350,7 @@ function PracticeScene({ bouquet, lesson, t }) {
         {t('lesson.practice_placeholder')}
       </p>
       <p className="text-xs text-[color:var(--color-ink-mute)] mt-3">
-        {t('lesson.practice_types_hint')}: {enabledTypes}
+        {/* Placeholder — QuestionRunner ships in the follow-up commit */}
       </p>
     </div>
   )
