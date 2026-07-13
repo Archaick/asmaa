@@ -450,9 +450,11 @@ const CELL_SIZE = 8
 const COMPLETION_THRESHOLD = 0.85
 const STROKE_RADIUS = 14
 const INTERP_STEP = 2
-const TRACE_COLOR = '#2563eb'                 // blue-600
-const GUIDE_COLOR = 'rgba(30, 41, 59, 0.28)'  // slate-800 @ 28%
-const ALPHA_THRESHOLD = 30                    // 0-255; ~12% opaque counts as letter
+const TRACE_COLOR = '#2563eb'    // blue-600
+// Fully opaque slate-300 — visible as a guide, and its alpha=1 keeps
+// source-atop strokes at their full colour instead of muting them.
+const GUIDE_COLOR = '#cbd5e1'
+const ALPHA_THRESHOLD = 80                    // 0-255; ~30% opaque counts as letter
 const FONT_FAMILY = '"Noto Naskh Arabic", "Readex Pro", serif'
 
 function TraceQuestion({ question, answered, onAnswer, findName, t }) {
@@ -489,10 +491,11 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      // Draw the guide letter (semi-transparent slate) precisely centred.
-      const padY = h * 0.08
-      const padX = w * 0.08
-      const fontSize = Math.floor(Math.min((h - padY * 2) * 0.85, (w - padX * 2) * 0.68))
+      // Draw the guide letter — fully opaque light slate. Alpha=1 is
+      // essential so source-atop strokes below render at full colour.
+      const padY = h * 0.14
+      const padX = w * 0.10
+      const fontSize = Math.floor(Math.min((h - padY * 2) * 0.80, (w - padX * 2) * 0.65))
       ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
@@ -502,8 +505,12 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       const m = ctx.measureText(name.name)
       const ascent  = m.actualBoundingBoxAscent  ?? fontSize * 0.72
       const descent = m.actualBoundingBoxDescent ?? fontSize * 0.28
-      // Offset so the actual glyph bounds sit centred, not the em-box.
-      const yOffset = (descent - ascent) / 2
+      // With textBaseline='middle', the em-middle is at y. Actual glyph
+      // top is at y - ascent, bottom at y + descent, so visual centre is
+      // at y + (descent - ascent)/2. To land visual centre on h/2, shift
+      // y by (ascent - descent)/2. (The old code had this sign backwards
+      // and pushed tall Arabic ascenders off the top of the canvas.)
+      const yOffset = (ascent - descent) / 2
       ctx.fillText(name.name, w / 2, h / 2 + yOffset)
 
       // Build the letter-cell set from the alpha channel.
@@ -525,7 +532,11 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       touchedCellsRef.current = new Set()
       setCoverage(0)
 
-      // Prime for stroke fills. All future paint is source-over (default).
+      // Switch to source-atop so subsequent paint only lands on letter
+      // pixels — the disc's edges are clipped precisely to the letter
+      // shape by the compositing engine, no more paint spilling into
+      // empty space around the cell centre.
+      ctx.globalCompositeOperation = 'source-atop'
       ctx.fillStyle = TRACE_COLOR
     }
 
@@ -541,16 +552,13 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
     return { x: src.clientX - rect.left, y: src.clientY - rect.top }
   }
 
-  // Paints a blue disc at (x, y) BUT ONLY if that cell is a letter cell.
-  // Off-letter positions are silently dropped — the whole point.
+  // Paints a blue disc at (x, y). Composite is source-atop so parts of
+  // the disc that fall on empty (non-letter) pixels are dropped by the
+  // compositing engine — the paint precisely follows the letter shape,
+  // including anti-aliased edges.
   const paintDot = (x, y) => {
-    const cellsX = letterCellsRef.current
-    if (cellsX.size === 0) return
-    const cx = Math.floor(x / CELL_SIZE)
-    const cy = Math.floor(y / CELL_SIZE)
-    if (!cellsX.has(`${cx},${cy}`)) return
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
+    if (letterCellsRef.current.size === 0) return
+    const ctx = canvasRef.current.getContext('2d')
     ctx.beginPath()
     ctx.arc(x, y, STROKE_RADIUS, 0, Math.PI * 2)
     ctx.fill()
@@ -625,13 +633,15 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
     const { w, h } = dimsRef.current
     const dpr = dprRef.current
     const ctx = canvas.getContext('2d')
+
+    // Reset composite mode + repaint the guide from scratch.
+    ctx.globalCompositeOperation = 'source-over'
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, w, h)
 
-    // Re-draw the guide letter using the same settings as setup().
-    const padY = h * 0.08
-    const padX = w * 0.08
-    const fontSize = Math.floor(Math.min((h - padY * 2) * 0.85, (w - padX * 2) * 0.68))
+    const padY = h * 0.14
+    const padX = w * 0.10
+    const fontSize = Math.floor(Math.min((h - padY * 2) * 0.80, (w - padX * 2) * 0.65))
     ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -640,7 +650,10 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
     const m = ctx.measureText(name.name)
     const ascent  = m.actualBoundingBoxAscent  ?? fontSize * 0.72
     const descent = m.actualBoundingBoxDescent ?? fontSize * 0.28
-    ctx.fillText(name.name, w / 2, h / 2 + (descent - ascent) / 2)
+    ctx.fillText(name.name, w / 2, h / 2 + (ascent - descent) / 2)
+
+    // Back to clip-mode + trace colour for the next round of strokes.
+    ctx.globalCompositeOperation = 'source-atop'
     ctx.fillStyle = TRACE_COLOR
 
     touchedCellsRef.current = new Set()
@@ -662,7 +675,7 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       <div
         ref={wrapRef}
         className="relative rounded-3xl bg-[color:var(--color-cream-warm)] border-2 border-dashed border-[color:var(--color-cream-deep)] overflow-hidden"
-        style={{ height: 340 }}
+        style={{ height: 360 }}
       >
         <canvas
           ref={canvasRef}
