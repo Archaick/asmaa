@@ -8,6 +8,7 @@ import { useProgress } from '../../hooks/useProgress'
 import { useBouquetLessons, useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
 import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import { playChime, playMilestoneChime } from '../../utils/chime'
+import QuestionRunner from '../../components/questions/QuestionRunner'
 
 // Template runner for /lesson/:bouquetId.
 // Every lesson — regardless of bouquet — follows the same 4-scene skeleton
@@ -166,7 +167,10 @@ export default function BouquetLesson() {
           )}
 
           {step === practiceIdx && (
-            <PracticeScene bouquet={bouquet} lesson={lesson} t={t} />
+            <QuestionRunner
+              bouquetId={bouquet.id}
+              onComplete={() => setStep(closingIdx)}
+            />
           )}
 
           {step === closingIdx && (
@@ -335,23 +339,6 @@ function Verb({ num, icon, label, verb, text, accent, fallback }) {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function PracticeScene({ bouquet, lesson, t }) {
-  return (
-    <div className="p-8 rounded-3xl bg-white border border-dashed border-[color:var(--color-cream-deep)] text-center">
-      <div className="text-5xl mb-3">🎯</div>
-      <h2 className="font-display text-xl font-bold text-[color:var(--color-ink)] mb-2">
-        {t('lesson.practice_title')}
-      </h2>
-      <p className="text-sm text-[color:var(--color-ink-soft)] max-w-md mx-auto leading-relaxed">
-        {t('lesson.practice_placeholder')}
-      </p>
-      <p className="text-xs text-[color:var(--color-ink-mute)] mt-3">
-        {/* Placeholder — QuestionRunner ships in the follow-up commit */}
-      </p>
     </div>
   )
 }
