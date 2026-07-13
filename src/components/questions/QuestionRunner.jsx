@@ -435,50 +435,126 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
 
 /* ─── Trace ──────────────────────────────────────────── */
 
+// Trace with real hit-testing:
+//   • Template canvas renders the Name as a filled shape (invisible; used
+//     only to know which pixels are actually letter and to build a coverage
+//     grid keyed by CELL_SIZE × CELL_SIZE cells).
+//   • Draw canvas shows the student's strokes in blue.
+//   • Only strokes that pass over letter cells count toward coverage.
+//   • The 'أنجزت' button unlocks once coverage crosses COMPLETION_THRESHOLD.
+//   • The Name itself is shown as a soft gray outline so the student knows
+//     what to trace but the strokes stand out clearly on top.
+const CELL_SIZE = 10
+const COMPLETION_THRESHOLD = 0.85
+const STROKE_WIDTH = 22
+const TRACE_COLOR = '#2563eb'    // blue-600
+const GUIDE_COLOR = 'rgba(30, 41, 59, 0.28)' // slate-800 @ 28%
+const FONT_FAMILY = '"Noto Naskh Arabic", "Readex Pro", serif'
+
 function TraceQuestion({ question, answered, onAnswer, findName, t }) {
   const name = findName(question.traceNameId)
-  const canvasRef = useRef(null)
+  const wrapRef = useRef(null)
+  const templateRef = useRef(null) // guide letters + pixel data for hit-test
+  const drawRef = useRef(null)     // student strokes
+  const letterCellsRef = useRef(new Set())
+  const touchedCellsRef = useRef(new Set())
   const drawingRef = useRef(false)
-  const [strokes, setStrokes] = useState(0)
+  const [coverage, setCoverage] = useState(0)
 
+  // Rebuild both canvases whenever the question changes or the container resizes.
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    // Size the canvas to its CSS box for a crisp draw surface
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect()
+    if (!name) return
+    let disposed = false
+    const setup = () => {
+      const wrap = wrapRef.current
+      const template = templateRef.current
+      const draw = drawRef.current
+      if (!wrap || !template || !draw) return
+      const rect = wrap.getBoundingClientRect()
+      const w = Math.floor(rect.width)
+      const h = Math.floor(rect.height)
       const dpr = window.devicePixelRatio || 1
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      const ctx = canvas.getContext('2d')
-      ctx.scale(dpr, dpr)
-      ctx.lineWidth = 10
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      const gold = getComputedStyle(document.documentElement)
-        .getPropertyValue('--color-gold-deep') || '#b8944e'
-      ctx.strokeStyle = gold.trim()
-    }
-    resize()
-    window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [question.id])
+      for (const c of [template, draw]) {
+        c.width = w * dpr
+        c.height = h * dpr
+      }
 
-  useEffect(() => {
-    // Clear on question change
-    const canvas = canvasRef.current
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect()
-      canvas.getContext('2d').clearRect(0, 0, rect.width, rect.height)
+      // Draw the Name at a big auto-scaled size onto the template canvas.
+      const tctx = template.getContext('2d')
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      tctx.clearRect(0, 0, w, h)
+      const fontSize = Math.floor(Math.min(h * 0.78, w * 0.62))
+      tctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
+      tctx.textAlign = 'center'
+      tctx.textBaseline = 'middle'
+      tctx.fillStyle = GUIDE_COLOR
+      tctx.fillText(name.name, w / 2, h / 2)
+
+      // Build the letter-cell set from the template's alpha channel.
+      const img = tctx.getImageData(0, 0, template.width, template.height)
+      const cellsX = Math.ceil(w / CELL_SIZE)
+      const cellsY = Math.ceil(h / CELL_SIZE)
+      const letterCells = new Set()
+      for (let cy = 0; cy < cellsY; cy++) {
+        for (let cx = 0; cx < cellsX; cx++) {
+          // Sample the center of each cell in device pixels
+          const sx = Math.floor((cx + 0.5) * CELL_SIZE * dpr)
+          const sy = Math.floor((cy + 0.5) * CELL_SIZE * dpr)
+          if (sx >= template.width || sy >= template.height) continue
+          const idx = (sy * template.width + sx) * 4
+          const alpha = img.data[idx + 3]
+          if (alpha > 40) letterCells.add(`${cx},${cy}`)
+        }
+      }
+      if (disposed) return
+      letterCellsRef.current = letterCells
+      touchedCellsRef.current = new Set()
+      setCoverage(0)
+
+      // Prime the draw canvas
+      const dctx = draw.getContext('2d')
+      dctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      dctx.clearRect(0, 0, w, h)
+      dctx.lineCap = 'round'
+      dctx.lineJoin = 'round'
+      dctx.lineWidth = STROKE_WIDTH
+      dctx.strokeStyle = TRACE_COLOR
     }
-    setStrokes(0)
-  }, [question.id])
+    setup()
+    window.addEventListener('resize', setup)
+    return () => { disposed = true; window.removeEventListener('resize', setup) }
+  }, [name?.name, question.id])
 
   const getPos = (e) => {
-    const canvas = canvasRef.current
+    const canvas = drawRef.current
     const rect = canvas.getBoundingClientRect()
     const src = e.touches?.[0] || e
     return { x: src.clientX - rect.left, y: src.clientY - rect.top }
+  }
+
+  // Mark every letter-cell within STROKE_WIDTH/2 of (x,y) as touched.
+  const markHits = (x, y) => {
+    const letterCells = letterCellsRef.current
+    if (letterCells.size === 0) return
+    const r = STROKE_WIDTH / 2 + 4
+    const minCX = Math.max(0, Math.floor((x - r) / CELL_SIZE))
+    const maxCX = Math.floor((x + r) / CELL_SIZE)
+    const minCY = Math.max(0, Math.floor((y - r) / CELL_SIZE))
+    const maxCY = Math.floor((y + r) / CELL_SIZE)
+    let added = false
+    const touched = touchedCellsRef.current
+    for (let cy = minCY; cy <= maxCY; cy++) {
+      for (let cx = minCX; cx <= maxCX; cx++) {
+        const key = `${cx},${cy}`
+        if (!letterCells.has(key) || touched.has(key)) continue
+        const centerX = (cx + 0.5) * CELL_SIZE
+        const centerY = (cy + 0.5) * CELL_SIZE
+        if ((centerX - x) ** 2 + (centerY - y) ** 2 <= r * r) {
+          touched.add(key); added = true
+        }
+      }
+    }
+    if (added) setCoverage(touched.size / letterCells.size)
   }
 
   const start = (e) => {
@@ -486,29 +562,38 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
     if (answered) return
     drawingRef.current = true
     const { x, y } = getPos(e)
-    const ctx = canvasRef.current.getContext('2d')
+    const ctx = drawRef.current.getContext('2d')
     ctx.beginPath()
     ctx.moveTo(x, y)
-    setStrokes((s) => s + 1)
+    // Small dot at start so a single tap still shows something
+    ctx.lineTo(x + 0.01, y + 0.01)
+    ctx.stroke()
+    markHits(x, y)
   }
 
   const move = (e) => {
     if (!drawingRef.current || answered) return
     e.preventDefault()
     const { x, y } = getPos(e)
-    const ctx = canvasRef.current.getContext('2d')
+    const ctx = drawRef.current.getContext('2d')
     ctx.lineTo(x, y)
     ctx.stroke()
+    markHits(x, y)
   }
 
   const end = () => { drawingRef.current = false }
 
   const clear = () => {
-    const canvas = canvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    canvas.getContext('2d').clearRect(0, 0, rect.width, rect.height)
-    setStrokes(0)
+    const draw = drawRef.current
+    if (!draw) return
+    const rect = draw.getBoundingClientRect()
+    draw.getContext('2d').clearRect(0, 0, rect.width, rect.height)
+    touchedCellsRef.current = new Set()
+    setCoverage(0)
   }
+
+  const pct = Math.min(100, Math.round(coverage * 100))
+  const canFinish = coverage >= COMPLETION_THRESHOLD
 
   return (
     <div dir="rtl">
@@ -520,27 +605,44 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       </h3>
 
       <div
+        ref={wrapRef}
         className="relative rounded-3xl bg-[color:var(--color-cream-warm)] border-2 border-dashed border-[color:var(--color-cream-deep)] overflow-hidden"
-        style={{ height: 220 }}
+        style={{ height: 340 }}
       >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-          <span className="font-serif text-7xl sm:text-8xl font-bold text-[color:var(--color-ink)] opacity-15">
-            {name?.name || ''}
-          </span>
-        </div>
         <canvas
-          ref={canvasRef}
+          ref={templateRef}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+        />
+        <canvas
+          ref={drawRef}
           className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
           onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
           onTouchStart={start} onTouchMove={move} onTouchEnd={end}
         />
       </div>
 
+      {/* Coverage bar */}
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-xs font-bold text-[color:var(--color-ink-soft)] mb-1">
+          <span>{t('practice.trace.coverage')}</span>
+          <span dir="ltr">{pct}%</span>
+        </div>
+        <div className="h-2 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all duration-150"
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, #93c5fd, ${TRACE_COLOR})`,
+            }}
+          />
+        </div>
+      </div>
+
       <div className="mt-3 flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={clear}
-          disabled={answered || strokes === 0}
+          disabled={answered || coverage === 0}
           className="px-4 py-2 rounded-full text-xs font-bold border border-[color:var(--color-cream-deep)] bg-white text-[color:var(--color-ink-soft)] hover:border-[color:var(--color-ink-mute)] disabled:opacity-40 transition"
         >
           ↺ {t('practice.trace.clear')}
@@ -548,11 +650,11 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
         <button
           type="button"
           onClick={() => onAnswer(true)}
-          disabled={answered || strokes === 0}
+          disabled={answered || !canFinish}
           className="px-5 py-2.5 rounded-full text-sm font-bold text-white shadow-sm hover:shadow-md active:scale-[0.97] disabled:opacity-40 transition-all"
-          style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
+          style={{ background: canFinish ? TRACE_COLOR : '#94a3b8' }}
         >
-          ✓ {t('practice.trace.done')}
+          {canFinish ? `✓ ${t('practice.trace.done')}` : t('practice.trace.trace_more')}
         </button>
       </div>
     </div>
