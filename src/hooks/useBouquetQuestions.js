@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  collection, doc, onSnapshot, orderBy, query,
+  collection, collectionGroup, doc, onSnapshot, orderBy, query, where,
   serverTimestamp, setDoc, updateDoc, deleteDoc, getDocs, writeBatch,
 } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -64,6 +64,35 @@ export async function updateQuestion(bouquetId, qId, updates) {
 
 export async function deleteQuestion(bouquetId, qId) {
   await deleteDoc(doc(db, 'bouquetLessons', bouquetId, 'questions', qId))
+}
+
+// Live counts of published questions grouped by bouquetId. Used by the
+// student curriculum grid to show how many questions each bouquet has.
+export function useAllBouquetsPublishedQuestionCounts() {
+  const [counts, setCounts] = useState({})
+
+  useEffect(() => {
+    const qq = query(
+      collectionGroup(db, 'questions'),
+      where('published', '==', true),
+    )
+    const unsub = onSnapshot(
+      qq,
+      (snap) => {
+        const c = {}
+        snap.forEach((d) => {
+          // path: /bouquetLessons/{bouquetId}/questions/{qid}
+          const bouquetId = d.ref.parent.parent?.id
+          if (bouquetId) c[bouquetId] = (c[bouquetId] || 0) + 1
+        })
+        setCounts(c)
+      },
+      (err) => console.warn('[useAllBouquetsPublishedQuestionCounts]:', err?.message),
+    )
+    return unsub
+  }, [])
+
+  return counts
 }
 
 // Reorder: swap two questions' order fields atomically.

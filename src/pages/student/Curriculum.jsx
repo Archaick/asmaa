@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import StudentLayout from '../../components/layout/StudentLayout'
 import { useLang } from '../../i18n/LangContext'
 import { useBouquetLessons, useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
+import { useAllBouquetsPublishedQuestionCounts } from '../../hooks/useBouquetQuestions'
 import { useProgress } from '../../hooks/useProgress'
 import { useNames } from '../../hooks/useNames'
 
@@ -13,6 +14,7 @@ export default function Curriculum() {
   const { isCompleted } = useBouquetLessonProgress()
   const { memorized } = useProgress()
   const { byBouquet } = useNames()
+  const questionCounts = useAllBouquetsPublishedQuestionCounts()
 
   return (
     <StudentLayout>
@@ -44,6 +46,7 @@ export default function Curriculum() {
                   memorized={mem}
                   total={real.length || names.length}
                   completed={isCompleted(l.id)}
+                  questionCount={questionCounts[l.id] || 0}
                   lang={lang}
                   t={t}
                 />
@@ -56,7 +59,7 @@ export default function Curriculum() {
   )
 }
 
-function BouquetLessonCard({ lesson, memorized, total, completed, lang, t }) {
+function BouquetLessonCard({ lesson, memorized, total, completed, questionCount, lang, t }) {
   const b = lesson.bouquet
   const isGold = b.color === 'gold'
   const pct = total > 0 ? Math.round((memorized / total) * 100) : 0
@@ -77,14 +80,21 @@ function BouquetLessonCard({ lesson, memorized, total, completed, lang, t }) {
       )}
 
       <div className="relative">
-        <div
-          className="inline-block text-[10px] font-bold uppercase tracking-widest mb-2 px-2.5 py-0.5 rounded-full"
-          style={{
-            background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
-            color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
-          }}
-        >
-          {t('bouquet.tag')} · {b.size} {t('curriculum.names_short')}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <span
+            className="inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full"
+            style={{
+              background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
+              color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
+            }}
+          >
+            {t('bouquet.tag')} · {b.size} {t('curriculum.names_short')}
+          </span>
+          {questionCount > 0 && (
+            <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[color:var(--color-cream-warm)] text-[color:var(--color-ink-soft)]">
+              🎯 {questionCount} {t('curriculum.questions_short')}
+            </span>
+          )}
         </div>
         <h2 className="font-display text-xl sm:text-2xl font-bold text-[color:var(--color-ink)] mb-2 leading-tight">
           {b.title}

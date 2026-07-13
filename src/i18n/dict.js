@@ -288,6 +288,7 @@ export const dict = {
     'curriculum.progress': 'التقدم',
     'curriculum.lessons_count': 'درساً',
     'curriculum.names_short': 'اسم',
+    'curriculum.questions_short': 'تمرين',
     'curriculum.template_hint': 'افتتاح ← الأفعال الأربعة لكل اسم ← تمارين ← ختام',
     'curriculum.back': 'عودة للدورات',
 
@@ -620,6 +621,7 @@ export const dict = {
     'curriculum.progress': 'Progress',
     'curriculum.lessons_count': 'lessons',
     'curriculum.names_short': 'names',
+    'curriculum.questions_short': 'questions',
     'curriculum.template_hint': 'Opening → the four verbs per name → practice → closing',
     'curriculum.back': 'Back to lessons',
 
