@@ -96,13 +96,9 @@ function BouquetLessonCard({ lesson, memorized, total, completed, questionCount,
             </span>
           )}
         </div>
-        <h2 className="font-display text-xl sm:text-2xl font-bold text-[color:var(--color-ink)] mb-2 leading-tight">
+        <h2 className="font-display text-xl sm:text-2xl font-bold text-[color:var(--color-ink)] mb-4 leading-tight">
           {b.title}
         </h2>
-
-        <p className="text-sm text-[color:var(--color-ink-soft)] mb-4">
-          {t('curriculum.template_hint')}
-        </p>
 
         <div className="flex items-center justify-between text-xs font-bold text-[color:var(--color-ink-soft)] mb-1.5">
           <span>{t('curriculum.progress')}</span>

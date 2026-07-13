@@ -240,12 +240,9 @@ function OpeningScene({ lesson, bouquet, lang, t }) {
   const intro = (lang === 'en' && lesson?.introEn) ? lesson.introEn : (lesson?.introAr || '')
   return (
     <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[color:var(--color-cream-deep)] text-center">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-gold-deep)] mb-3">
-        {t('lesson.opening_label')}
-      </div>
-      <h2 className="font-display text-lg font-bold text-[color:var(--color-ink)] mb-3">
+      <div className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)] mb-4">
         {t('memorize.hadith.opening_label')}
-      </h2>
+      </div>
       <p className="font-serif text-base sm:text-lg leading-relaxed text-[color:var(--color-ink)] max-w-2xl mx-auto" dir="rtl">
         «{OPENING_HADITH.text}»
       </p>
@@ -253,9 +250,6 @@ function OpeningScene({ lesson, bouquet, lang, t }) {
 
       {intro && (
         <div className="mt-6 p-4 rounded-2xl bg-[color:var(--color-cream-warm)] border border-[color:var(--color-cream-deep)]">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-ink-soft)] mb-1">
-            {t('lesson.intro_label')} — {bouquet.title}
-          </div>
           <p className="text-base text-[color:var(--color-ink)] leading-relaxed">{intro}</p>
         </div>
       )}
@@ -347,12 +341,9 @@ function ClosingScene({ lesson, bouquet, lang, t }) {
   const outro = (lang === 'en' && lesson?.outroEn) ? lesson.outroEn : (lesson?.outroAr || '')
   return (
     <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[color:var(--color-cream-deep)] text-center">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-teal-deep)] mb-3">
-        {t('lesson.closing_label')}
-      </div>
-      <h2 className="font-display text-lg font-bold text-[color:var(--color-ink)] mb-3">
+      <div className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[color:var(--color-teal-soft)] text-[color:var(--color-teal-deep)] mb-4">
         {t('memorize.hadith.closing_label')}
-      </h2>
+      </div>
       <p className="font-serif text-base sm:text-lg leading-relaxed text-[color:var(--color-ink)] max-w-2xl mx-auto" dir="rtl">
         «{CLOSING_HADITH.text}»
       </p>
@@ -360,9 +351,6 @@ function ClosingScene({ lesson, bouquet, lang, t }) {
 
       {outro && (
         <div className="mt-6 p-4 rounded-2xl bg-[color:var(--color-cream-warm)] border border-[color:var(--color-cream-deep)]">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-ink-soft)] mb-1">
-            {t('lesson.outro_label')} — {bouquet.title}
-          </div>
           <p className="text-base text-[color:var(--color-ink)] leading-relaxed">{outro}</p>
         </div>
       )}
