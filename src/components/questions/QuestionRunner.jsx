@@ -435,75 +435,89 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
 
 /* ─── Trace ──────────────────────────────────────────── */
 
-// Trace with real hit-testing:
-//   • Template canvas renders the Name as a filled shape (invisible; used
-//     only to know which pixels are actually letter and to build a coverage
-//     grid keyed by CELL_SIZE × CELL_SIZE cells).
-//   • Draw canvas shows the student's strokes in blue.
-//   • Only strokes that pass over letter cells count toward coverage.
-//   • The 'أنجزت' button unlocks once coverage crosses COMPLETION_THRESHOLD.
-//   • The Name itself is shown as a soft gray outline so the student knows
-//     what to trace but the strokes stand out clearly on top.
-const CELL_SIZE = 10
+// Trace with real hit-testing + off-letter clipping:
+//   • One canvas, two layers of drawing:
+//     1. Guide letter (light slate) rendered as base.
+//     2. Blue dots painted at every interpolated pointer position — but
+//        ONLY if that position falls inside a letter cell. Drags across
+//        empty space render nothing at all, so the student sees no
+//        progress unless their finger is actually on the letters.
+//   • The letter is centred using measureText's actualBoundingBox so
+//     Arabic serifs sit visually centred rather than at the em-baseline.
+//   • Coverage % (touched-letter-cells / total-letter-cells) gates the
+//     'أنجزت' button at COMPLETION_THRESHOLD.
+const CELL_SIZE = 8
 const COMPLETION_THRESHOLD = 0.85
-const STROKE_WIDTH = 22
-const TRACE_COLOR = '#2563eb'    // blue-600
-const GUIDE_COLOR = 'rgba(30, 41, 59, 0.28)' // slate-800 @ 28%
+const STROKE_RADIUS = 14
+const INTERP_STEP = 2
+const TRACE_COLOR = '#2563eb'                 // blue-600
+const GUIDE_COLOR = 'rgba(30, 41, 59, 0.28)'  // slate-800 @ 28%
+const ALPHA_THRESHOLD = 30                    // 0-255; ~12% opaque counts as letter
 const FONT_FAMILY = '"Noto Naskh Arabic", "Readex Pro", serif'
 
 function TraceQuestion({ question, answered, onAnswer, findName, t }) {
   const name = findName(question.traceNameId)
   const wrapRef = useRef(null)
-  const templateRef = useRef(null) // guide letters + pixel data for hit-test
-  const drawRef = useRef(null)     // student strokes
+  const canvasRef = useRef(null)
   const letterCellsRef = useRef(new Set())
   const touchedCellsRef = useRef(new Set())
   const drawingRef = useRef(false)
+  const lastPosRef = useRef({ x: 0, y: 0 })
+  const dprRef = useRef(1)
+  const dimsRef = useRef({ w: 0, h: 0 })
   const [coverage, setCoverage] = useState(0)
 
-  // Rebuild both canvases whenever the question changes or the container resizes.
+  // Rebuild the canvas whenever the question changes or the container resizes.
   useEffect(() => {
     if (!name) return
     let disposed = false
+
     const setup = () => {
       const wrap = wrapRef.current
-      const template = templateRef.current
-      const draw = drawRef.current
-      if (!wrap || !template || !draw) return
+      const canvas = canvasRef.current
+      if (!wrap || !canvas) return
       const rect = wrap.getBoundingClientRect()
       const w = Math.floor(rect.width)
       const h = Math.floor(rect.height)
       const dpr = window.devicePixelRatio || 1
-      for (const c of [template, draw]) {
-        c.width = w * dpr
-        c.height = h * dpr
-      }
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      dprRef.current = dpr
+      dimsRef.current = { w, h }
 
-      // Draw the Name at a big auto-scaled size onto the template canvas.
-      const tctx = template.getContext('2d')
-      tctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      tctx.clearRect(0, 0, w, h)
-      const fontSize = Math.floor(Math.min(h * 0.78, w * 0.62))
-      tctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
-      tctx.textAlign = 'center'
-      tctx.textBaseline = 'middle'
-      tctx.fillStyle = GUIDE_COLOR
-      tctx.fillText(name.name, w / 2, h / 2)
+      const ctx = canvas.getContext('2d')
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, w, h)
 
-      // Build the letter-cell set from the template's alpha channel.
-      const img = tctx.getImageData(0, 0, template.width, template.height)
+      // Draw the guide letter (semi-transparent slate) precisely centred.
+      const padY = h * 0.08
+      const padX = w * 0.08
+      const fontSize = Math.floor(Math.min((h - padY * 2) * 0.85, (w - padX * 2) * 0.68))
+      ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.direction = 'rtl'
+      ctx.fillStyle = GUIDE_COLOR
+
+      const m = ctx.measureText(name.name)
+      const ascent  = m.actualBoundingBoxAscent  ?? fontSize * 0.72
+      const descent = m.actualBoundingBoxDescent ?? fontSize * 0.28
+      // Offset so the actual glyph bounds sit centred, not the em-box.
+      const yOffset = (descent - ascent) / 2
+      ctx.fillText(name.name, w / 2, h / 2 + yOffset)
+
+      // Build the letter-cell set from the alpha channel.
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const cellsX = Math.ceil(w / CELL_SIZE)
       const cellsY = Math.ceil(h / CELL_SIZE)
       const letterCells = new Set()
       for (let cy = 0; cy < cellsY; cy++) {
         for (let cx = 0; cx < cellsX; cx++) {
-          // Sample the center of each cell in device pixels
           const sx = Math.floor((cx + 0.5) * CELL_SIZE * dpr)
           const sy = Math.floor((cy + 0.5) * CELL_SIZE * dpr)
-          if (sx >= template.width || sy >= template.height) continue
-          const idx = (sy * template.width + sx) * 4
-          const alpha = img.data[idx + 3]
-          if (alpha > 40) letterCells.add(`${cx},${cy}`)
+          if (sx >= canvas.width || sy >= canvas.height) continue
+          const idx = (sy * canvas.width + sx) * 4
+          if (img.data[idx + 3] > ALPHA_THRESHOLD) letterCells.add(`${cx},${cy}`)
         }
       }
       if (disposed) return
@@ -511,32 +525,42 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
       touchedCellsRef.current = new Set()
       setCoverage(0)
 
-      // Prime the draw canvas
-      const dctx = draw.getContext('2d')
-      dctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      dctx.clearRect(0, 0, w, h)
-      dctx.lineCap = 'round'
-      dctx.lineJoin = 'round'
-      dctx.lineWidth = STROKE_WIDTH
-      dctx.strokeStyle = TRACE_COLOR
+      // Prime for stroke fills. All future paint is source-over (default).
+      ctx.fillStyle = TRACE_COLOR
     }
+
     setup()
     window.addEventListener('resize', setup)
     return () => { disposed = true; window.removeEventListener('resize', setup) }
   }, [name?.name, question.id])
 
   const getPos = (e) => {
-    const canvas = drawRef.current
+    const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
     const src = e.touches?.[0] || e
     return { x: src.clientX - rect.left, y: src.clientY - rect.top }
   }
 
-  // Mark every letter-cell within STROKE_WIDTH/2 of (x,y) as touched.
+  // Paints a blue disc at (x, y) BUT ONLY if that cell is a letter cell.
+  // Off-letter positions are silently dropped — the whole point.
+  const paintDot = (x, y) => {
+    const cellsX = letterCellsRef.current
+    if (cellsX.size === 0) return
+    const cx = Math.floor(x / CELL_SIZE)
+    const cy = Math.floor(y / CELL_SIZE)
+    if (!cellsX.has(`${cx},${cy}`)) return
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.beginPath()
+    ctx.arc(x, y, STROKE_RADIUS, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Mark every letter-cell within STROKE_RADIUS of (x, y) as touched.
   const markHits = (x, y) => {
     const letterCells = letterCellsRef.current
     if (letterCells.size === 0) return
-    const r = STROKE_WIDTH / 2 + 4
+    const r = STROKE_RADIUS + 2
     const minCX = Math.max(0, Math.floor((x - r) / CELL_SIZE))
     const maxCX = Math.floor((x + r) / CELL_SIZE)
     const minCY = Math.max(0, Math.floor((y - r) / CELL_SIZE))
@@ -557,37 +581,68 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
     if (added) setCoverage(touched.size / letterCells.size)
   }
 
+  // Paints (and hit-registers) along the segment from (fromX,fromY) to
+  // (toX,toY) at INTERP_STEP px increments. Ensures continuous colour on
+  // fast finger drags without leaving gaps between move events.
+  const paintSegment = (fromX, fromY, toX, toY) => {
+    const dx = toX - fromX
+    const dy = toY - fromY
+    const dist = Math.hypot(dx, dy)
+    const steps = Math.max(1, Math.ceil(dist / INTERP_STEP))
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps
+      const px = fromX + dx * t
+      const py = fromY + dy * t
+      paintDot(px, py)
+      markHits(px, py)
+    }
+  }
+
   const start = (e) => {
     e.preventDefault()
     if (answered) return
     drawingRef.current = true
     const { x, y } = getPos(e)
-    const ctx = drawRef.current.getContext('2d')
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    // Small dot at start so a single tap still shows something
-    ctx.lineTo(x + 0.01, y + 0.01)
-    ctx.stroke()
+    paintDot(x, y)
     markHits(x, y)
+    lastPosRef.current = { x, y }
   }
 
   const move = (e) => {
     if (!drawingRef.current || answered) return
     e.preventDefault()
     const { x, y } = getPos(e)
-    const ctx = drawRef.current.getContext('2d')
-    ctx.lineTo(x, y)
-    ctx.stroke()
-    markHits(x, y)
+    const { x: lx, y: ly } = lastPosRef.current
+    paintSegment(lx, ly, x, y)
+    lastPosRef.current = { x, y }
   }
 
   const end = () => { drawingRef.current = false }
 
   const clear = () => {
-    const draw = drawRef.current
-    if (!draw) return
-    const rect = draw.getBoundingClientRect()
-    draw.getContext('2d').clearRect(0, 0, rect.width, rect.height)
+    const canvas = canvasRef.current
+    if (!canvas || !name) return
+    const { w, h } = dimsRef.current
+    const dpr = dprRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, w, h)
+
+    // Re-draw the guide letter using the same settings as setup().
+    const padY = h * 0.08
+    const padX = w * 0.08
+    const fontSize = Math.floor(Math.min((h - padY * 2) * 0.85, (w - padX * 2) * 0.68))
+    ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.direction = 'rtl'
+    ctx.fillStyle = GUIDE_COLOR
+    const m = ctx.measureText(name.name)
+    const ascent  = m.actualBoundingBoxAscent  ?? fontSize * 0.72
+    const descent = m.actualBoundingBoxDescent ?? fontSize * 0.28
+    ctx.fillText(name.name, w / 2, h / 2 + (descent - ascent) / 2)
+    ctx.fillStyle = TRACE_COLOR
+
     touchedCellsRef.current = new Set()
     setCoverage(0)
   }
@@ -610,11 +665,7 @@ function TraceQuestion({ question, answered, onAnswer, findName, t }) {
         style={{ height: 340 }}
       >
         <canvas
-          ref={templateRef}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-        />
-        <canvas
-          ref={drawRef}
+          ref={canvasRef}
           className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
           onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
           onTouchStart={start} onTouchMove={move} onTouchEnd={end}
