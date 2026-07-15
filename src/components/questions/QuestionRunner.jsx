@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useBouquetQuestions, NAME_FIELDS } from '../../hooks/useBouquetQuestions'
 import { useNames } from '../../hooks/useNames'
 import { useLang } from '../../i18n/LangContext'
 import { playChime, playMilestoneChime } from '../../utils/chime'
+
+// How long the correct/wrong feedback lingers before auto-advancing.
+const ADVANCE_DELAY_CORRECT = 900
+const ADVANCE_DELAY_WRONG = 1900
 
 // Duolingo-style practice block for a bouquet lesson.
 // - Reads published questions from /bouquetLessons/{id}/questions/*
@@ -23,6 +27,7 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
   const [answered, setAnswered] = useState(false)
   const [wasCorrect, setWasCorrect] = useState(null)
   const [score, setScore] = useState(0)
+  const advTimer = useRef(null)
 
   const total = questions.length
   const q = questions[index]
@@ -38,16 +43,25 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
     }
   }
 
-  const onNext = () => {
-    if (index + 1 >= total) {
-      playMilestoneChime()
-      setIndex(index + 1)
-    } else {
-      setIndex((i) => i + 1)
-      setAnswered(false)
-      setWasCorrect(null)
-    }
+  // Advance to the next question (or the summary). Single source of truth,
+  // called both by the auto-advance timer and a tap-to-continue.
+  const advance = () => {
+    clearTimeout(advTimer.current)
+    const nxt = index + 1
+    if (nxt >= total) playMilestoneChime()
+    setAnswered(false)
+    setWasCorrect(null)
+    setIndex(nxt)
   }
+
+  // Duolingo-style: once a question is answered, linger on the feedback for
+  // a beat then move on automatically — no manual "next" button.
+  useEffect(() => {
+    if (!answered) return
+    const delay = wasCorrect ? ADVANCE_DELAY_CORRECT : ADVANCE_DELAY_WRONG
+    advTimer.current = setTimeout(advance, delay)
+    return () => clearTimeout(advTimer.current)
+  }, [answered, wasCorrect, index]) // eslint-disable-line
 
   if (loading) {
     return (
@@ -99,7 +113,7 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
 
   return (
     <div className="space-y-4">
-      <ProgressBar index={index} total={total} />
+      <ProgressBar filled={index + (answered ? 1 : 0)} total={total} />
 
       <div key={q.id} className="rounded-3xl bg-white border border-[color:var(--color-cream-deep)] overflow-hidden animate-fade-swap">
         <div className="p-5 sm:p-7">
@@ -115,37 +129,36 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
           />
         </div>
 
+        {/* Feedback banner — auto-advances; tap anywhere on it to skip the wait */}
         {answered && (
-          <div className={'px-5 sm:px-7 py-4 border-t border-[color:var(--color-cream-deep)] flex items-center justify-between gap-3 ' + (wasCorrect ? 'bg-[color:var(--color-teal-soft)]' : 'bg-red-50')}>
-            <div className={'text-sm font-bold ' + (wasCorrect ? 'text-[color:var(--color-teal-deep)]' : 'text-red-800')}>
+          <button
+            type="button"
+            onClick={advance}
+            className={
+              'w-full px-5 sm:px-7 py-4 border-t border-[color:var(--color-cream-deep)] flex items-center justify-between gap-3 text-start transition ' +
+              (wasCorrect ? 'bg-[color:var(--color-teal-soft)] hover:bg-[color:var(--color-teal-soft)]/80' : 'bg-red-50 hover:bg-red-100')
+            }
+          >
+            <span className={'text-sm font-bold ' + (wasCorrect ? 'text-[color:var(--color-teal-deep)]' : 'text-red-800')}>
               {wasCorrect ? `✓ ${t('practice.feedback.correct')}` : `✗ ${t('practice.feedback.wrong')}`}
-            </div>
-            <button
-              type="button"
-              onClick={onNext}
-              className={
-                'px-5 py-2 rounded-full text-sm font-bold shadow-sm active:scale-[0.97] transition ' +
-                (wasCorrect
-                  ? 'bg-[color:var(--color-teal-deep)] text-white hover:bg-[color:var(--color-teal)]'
-                  : 'bg-red-700 text-white hover:bg-red-800')
-              }
-            >
-              {index + 1 >= total ? t('practice.finish') : t('practice.next')} ←
-            </button>
-          </div>
+            </span>
+            <span className="text-[11px] font-bold text-[color:var(--color-ink-mute)]">
+              {t('practice.tap_continue')} ←
+            </span>
+          </button>
         )}
       </div>
     </div>
   )
 }
 
-function ProgressBar({ index, total }) {
-  const pct = Math.round((index / total) * 100)
+function ProgressBar({ filled, total }) {
+  const pct = Math.round((filled / total) * 100)
   return (
     <div>
       <div className="flex items-center justify-between text-xs font-bold text-[color:var(--color-ink-soft)] mb-1.5">
         <span>🎯</span>
-        <span dir="ltr">{index} / {total}</span>
+        <span dir="ltr">{Math.min(filled, total)} / {total}</span>
       </div>
       <div className="h-2 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden">
         <div
@@ -322,68 +335,98 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
   )
 
   const [selectedName, setSelectedName] = useState(null) // nameId
-  const [matched, setMatched] = useState({}) // { nameId: true }
-  const [wrongFlash, setWrongFlash] = useState(null) // { nameId, valueId }
-  const [attempts, setAttempts] = useState(0)
+  const [pairs, setPairs] = useState([])                 // [{ nameId, valueId }]
+  const [coords, setCoords] = useState({})               // { "nameId|valueId": {x1,y1,x2,y2} }
+  const [settled, setSettled] = useState(() => new Set())// keys whose draw-in finished
+  const [wrongFlash, setWrongFlash] = useState(null)     // { nameId, valueId }
   const [wrongAttempts, setWrongAttempts] = useState(0)
-  const [lines, setLines] = useState([]) // [{ id, x1, y1, x2, y2 }]
 
-  // Refs to compute connector line endpoints per matched pair.
   const gridRef = useRef(null)
   const nameRefs = useRef({})
   const valueRefs = useRef({})
+  const pairsRef = useRef([])
   const setNameRef = (id) => (el) => { if (el) nameRefs.current[id] = el }
   const setValueRef = (id) => (el) => { if (el) valueRefs.current[id] = el }
 
+  const matchedNames = useMemo(() => new Set(pairs.map((p) => p.nameId)), [pairs])
+  const matchedValues = useMemo(() => new Set(pairs.map((p) => p.valueId)), [pairs])
+
+  // Recompute EVERY connector line's endpoints from live DOM geometry. Called
+  // whenever pairs change and on any resize, so lines stay glued to their
+  // boxes no matter how the layout reflows.
+  const recompute = useCallback(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const gr = grid.getBoundingClientRect()
+    const next = {}
+    for (const p of pairsRef.current) {
+      const nameEl = nameRefs.current[p.nameId]
+      const valueEl = valueRefs.current[p.valueId]
+      if (!nameEl || !valueEl) continue
+      const nr = nameEl.getBoundingClientRect()
+      const vr = valueEl.getBoundingClientRect()
+      // Names sit in the RTL-first (right) column, values in the left column:
+      // line runs from the name box's LEFT edge to the value box's RIGHT edge.
+      next[`${p.nameId}|${p.valueId}`] = {
+        x1: nr.left  - gr.left,
+        y1: nr.top   - gr.top + nr.height / 2,
+        x2: vr.right - gr.left,
+        y2: vr.top   - gr.top + vr.height / 2,
+      }
+    }
+    setCoords(next)
+  }, [])
+
+  // Reset all state on question change.
   useEffect(() => {
-    setSelectedName(null); setMatched({}); setWrongFlash(null)
-    setAttempts(0); setWrongAttempts(0); setLines([])
+    setSelectedName(null); setPairs([]); setCoords({})
+    setSettled(new Set()); setWrongFlash(null); setWrongAttempts(0)
+    pairsRef.current = []
   }, [question.id])
 
-  // Detect completion
+  // Recompute after any pairs change (layout effect → refs are positioned).
+  useLayoutEffect(() => {
+    pairsRef.current = pairs
+    recompute()
+  }, [pairs, recompute])
+
+  // Recompute on container resize + window resize (the whole point of the fix).
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid || typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', recompute)
+      return () => window.removeEventListener('resize', recompute)
+    }
+    const ro = new ResizeObserver(() => recompute())
+    ro.observe(grid)
+    window.addEventListener('resize', recompute)
+    return () => { ro.disconnect(); window.removeEventListener('resize', recompute) }
+  }, [recompute])
+
+  // Completion → grade after the last line has drawn in.
   useEffect(() => {
     if (answered) return
-    if (names.length > 0 && Object.keys(matched).length === names.length * 2) {
-      // Small delay so the last connector line finishes drawing before feedback
-      const to = setTimeout(() => {
-        onAnswer(wrongAttempts === 0)
-      }, 550)
+    if (names.length > 0 && pairs.length === names.length) {
+      const to = setTimeout(() => onAnswer(wrongAttempts === 0), 650)
       return () => clearTimeout(to)
     }
-  }, [matched, names.length, answered, wrongAttempts])
-
-  // Adds a connector line between the two matched boxes. Coordinates are
-  // relative to the grid container so the SVG can position them cleanly.
-  const addLine = (nameId, valueId) => {
-    const grid = gridRef.current
-    const nameEl = nameRefs.current[nameId]
-    const valueEl = valueRefs.current[valueId]
-    if (!grid || !nameEl || !valueEl) return
-    const gr = grid.getBoundingClientRect()
-    const nr = nameEl.getBoundingClientRect()
-    const vr = valueEl.getBoundingClientRect()
-    // Names live in the RTL-first (right) column, values in the second (left).
-    // Line runs from the name box's LEFT edge to the value box's RIGHT edge.
-    const x1 = nr.left  - gr.left
-    const y1 = nr.top   - gr.top + nr.height / 2
-    const x2 = vr.right - gr.left
-    const y2 = vr.top   - gr.top + vr.height / 2
-    setLines((prev) => [...prev, { id: `${nameId}-${valueId}`, x1, y1, x2, y2 }])
-  }
+  }, [pairs, names.length, answered, wrongAttempts])
 
   const onPickName = (nameId) => {
-    if (answered || matched[nameId]) return
+    if (answered || matchedNames.has(nameId)) return
     setSelectedName((s) => (s === nameId ? null : nameId))
   }
 
   const onPickValue = (valueId) => {
     if (answered || !selectedName) return
-    if (matched[valueId] || matched[selectedName]) return
-    setAttempts((a) => a + 1)
+    if (matchedValues.has(valueId) || matchedNames.has(selectedName)) return
     if (selectedName === valueId) {
       const pickedName = selectedName
-      addLine(pickedName, valueId)
-      setMatched((m) => ({ ...m, [pickedName]: true, [valueId]: true }))
+      const key = `${pickedName}|${valueId}`
+      setPairs((p) => [...p, { nameId: pickedName, valueId }])
+      // Mark the line settled once its draw-in animation completes, so future
+      // resizes just reposition it instead of re-animating.
+      setTimeout(() => setSettled((s) => new Set(s).add(key)), 600)
       setSelectedName(null)
       playChime()
     } else {
@@ -404,24 +447,28 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
       </h3>
 
       <div ref={gridRef} className="relative grid grid-cols-2 gap-3">
-        {/* Connector lines overlay — drawn top of columns, ignores clicks */}
+        {/* Connector lines overlay — sits above the columns, ignores clicks */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ zIndex: 5, overflow: 'visible' }}
           aria-hidden="true"
         >
-          {lines.map((line) => {
-            const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1)
+          {pairs.map((p) => {
+            const key = `${p.nameId}|${p.valueId}`
+            const c = coords[key]
+            if (!c) return null
+            const isSettled = settled.has(key)
+            const length = Math.hypot(c.x2 - c.x1, c.y2 - c.y1)
             return (
               <line
-                key={line.id}
-                x1={line.x1} y1={line.y1}
-                x2={line.x2} y2={line.y2}
+                key={key}
+                x1={c.x1} y1={c.y1}
+                x2={c.x2} y2={c.y2}
                 stroke="var(--color-teal-deep)"
                 strokeWidth="3"
                 strokeLinecap="round"
-                className="animate-pair-line"
-                style={{ strokeDasharray: length, strokeDashoffset: length }}
+                className={isSettled ? '' : 'animate-pair-line'}
+                style={isSettled ? undefined : { strokeDasharray: length, strokeDashoffset: length }}
               />
             )
           })}
@@ -430,7 +477,7 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         {/* Names column */}
         <div className="space-y-2 relative" style={{ zIndex: 1 }}>
           {names.map((n) => {
-            const isMatched = matched[n.id]
+            const isMatched = matchedNames.has(n.id)
             const isSelected = selectedName === n.id
             const isWrong = wrongFlash?.nameId === n.id
             return (
@@ -460,7 +507,7 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         {/* Values column */}
         <div className="space-y-2 relative" style={{ zIndex: 1 }}>
           {shuffledValues.map((v) => {
-            const isMatched = matched[v.id]
+            const isMatched = matchedValues.has(v.id)
             const isWrong = wrongFlash?.valueId === v.id
             return (
               <button
@@ -486,7 +533,7 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
       </div>
 
       <div className="mt-3 text-[11px] text-[color:var(--color-ink-mute)] text-center" dir="ltr">
-        {Object.keys(matched).length / 2} / {names.length}
+        {pairs.length} / {names.length}
         {wrongAttempts > 0 && ` · ${wrongAttempts} ✗`}
       </div>
     </div>
