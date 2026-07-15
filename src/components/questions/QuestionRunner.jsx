@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBouquetQuestions, NAME_FIELDS } from '../../hooks/useBouquetQuestions'
 import { useNames } from '../../hooks/useNames'
 import { useLang } from '../../i18n/LangContext'
@@ -79,7 +79,7 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
         <p className="text-sm text-[color:var(--color-ink-soft)] mb-5">{t('practice.empty.hint')}</p>
         <button
           type="button"
-          onClick={onComplete}
+          onClick={() => onComplete(null)}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] active:scale-[0.97] transition-all"
         >
           {t('practice.summary.continue')} ←
@@ -90,23 +90,38 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
 
   if (done) {
     const pct = Math.round((score / total) * 100)
+    const perfect = score === total
+    const restart = () => {
+      setIndex(0); setScore(0); setAnswered(false); setWasCorrect(null)
+    }
     return (
       <div className="p-8 rounded-3xl bg-white border-2 border-[color:var(--color-gold)] text-center animate-celebrate-pop">
-        <div className="text-5xl mb-3">🌟</div>
-        <h2 className="font-display text-2xl font-bold text-[color:var(--color-ink)] mb-2">
+        <div className="text-5xl mb-3">{perfect ? '🏆' : '🌟'}</div>
+        <h2 className="font-display text-2xl font-bold text-[color:var(--color-ink)] mb-1">
           {t('practice.summary.title')}
         </h2>
-        <p className="text-[color:var(--color-ink-soft)] mb-4" dir="ltr">
-          {score} / {total} · {pct}%
-        </p>
-        <button
-          type="button"
-          onClick={onComplete}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-base font-bold text-white shadow-md hover:shadow-lg active:scale-[0.97] transition-all"
-          style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
-        >
-          {t('practice.summary.continue')} ←
-        </button>
+        <div className="text-3xl font-display font-bold text-[color:var(--color-gold-deep)] mb-1" dir="ltr">
+          {score} / {total}
+        </div>
+        <p className="text-sm text-[color:var(--color-ink-soft)] mb-6" dir="ltr">{pct}%</p>
+
+        <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
+          <button
+            type="button"
+            onClick={restart}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold border-2 border-[color:var(--color-cream-deep)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] active:scale-[0.97] transition-all"
+          >
+            ↺ {t('practice.summary.retake')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onComplete({ score, total })}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-base font-bold text-white shadow-md hover:shadow-lg active:scale-[0.97] transition-all"
+            style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
+          >
+            {t('practice.summary.continue')} ←
+          </button>
+        </div>
       </div>
     )
   }
@@ -129,24 +144,56 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
           />
         </div>
 
-        {/* Feedback banner — auto-advances; tap anywhere on it to skip the wait */}
-        {answered && (
+      </div>
+
+      {/* Duolingo-style feedback modal — slides up from the bottom */}
+      {answered && (
+        <FeedbackSheet correct={wasCorrect} onContinue={advance} t={t} />
+      )}
+    </div>
+  )
+}
+
+// Bottom sheet that pops up on answer with a green/red result + effects.
+function FeedbackSheet({ correct, onContinue, t }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[90] pointer-events-none">
+      <div
+        className={
+          'pointer-events-auto animate-feedback-up border-t-2 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] ' +
+          (correct
+            ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)]'
+            : 'bg-red-50 border-red-300')
+        }
+      >
+        <div className="max-w-3xl mx-auto px-5 sm:px-7 py-4 flex items-center justify-between gap-4" dir="rtl">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className={
+                'w-11 h-11 rounded-full flex items-center justify-center text-2xl shrink-0 text-white ' +
+                (correct ? 'animate-feedback-icon' : 'animate-feedback-shake')
+              }
+              style={{ background: correct ? 'var(--color-teal-deep)' : '#dc2626' }}
+            >
+              {correct ? '✓' : '✗'}
+            </div>
+            <div className="min-w-0">
+              <div className={'font-display text-lg font-bold ' + (correct ? 'text-[color:var(--color-teal-deep)]' : 'text-red-800')}>
+                {correct ? t('practice.feedback.correct') : t('practice.feedback.wrong')}
+              </div>
+            </div>
+          </div>
           <button
             type="button"
-            onClick={advance}
+            onClick={onContinue}
             className={
-              'w-full px-5 sm:px-7 py-4 border-t border-[color:var(--color-cream-deep)] flex items-center justify-between gap-3 text-start transition ' +
-              (wasCorrect ? 'bg-[color:var(--color-teal-soft)] hover:bg-[color:var(--color-teal-soft)]/80' : 'bg-red-50 hover:bg-red-100')
+              'shrink-0 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-sm active:scale-[0.96] transition ' +
+              (correct ? 'bg-[color:var(--color-teal-deep)] hover:bg-[color:var(--color-teal)]' : 'bg-red-600 hover:bg-red-700')
             }
           >
-            <span className={'text-sm font-bold ' + (wasCorrect ? 'text-[color:var(--color-teal-deep)]' : 'text-red-800')}>
-              {wasCorrect ? `✓ ${t('practice.feedback.correct')}` : `✗ ${t('practice.feedback.wrong')}`}
-            </span>
-            <span className="text-[11px] font-bold text-[color:var(--color-ink-mute)]">
-              {t('practice.tap_continue')} ←
-            </span>
+            {t('practice.tap_continue')} ←
           </button>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -323,7 +370,11 @@ function TFQuestion({ question, answered, wasCorrect, onAnswer, lang, t }) {
 
 /* ─── Word Pair (matching) ────────────────────────────── */
 
-function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, t }) {
+// Duolingo-style tile matching — NO connector lines (they scattered on
+// resize and never looked good). Tap a name → tap its meaning. Correct pairs
+// flash green and lock; wrong pairs shake red and reset. Purely flexbox, so
+// resizing can never misplace anything.
+function WPQuestion({ question, answered, onAnswer, findName, lang, t }) {
   const field = question.wpField || 'meaning'
   const fieldMeta = NAME_FIELDS.find((f) => f.key === field)
   const names = (question.wpNameIds || []).map(findName).filter(Boolean)
@@ -334,108 +385,65 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
     [question.id]
   )
 
-  const [selectedName, setSelectedName] = useState(null) // nameId
-  const [pairs, setPairs] = useState([])                 // [{ nameId, valueId }]
-  const [coords, setCoords] = useState({})               // { "nameId|valueId": {x1,y1,x2,y2} }
-  const [settled, setSettled] = useState(() => new Set())// keys whose draw-in finished
-  const [wrongFlash, setWrongFlash] = useState(null)     // { nameId, valueId }
+  const [selectedName, setSelectedName] = useState(null)  // nameId
+  const [selectedValue, setSelectedValue] = useState(null) // valueId
+  const [matched, setMatched] = useState(() => new Set())  // matched ids (name & value share id)
+  const [wrongFlash, setWrongFlash] = useState(null)       // { nameId, valueId }
   const [wrongAttempts, setWrongAttempts] = useState(0)
 
-  const gridRef = useRef(null)
-  const nameRefs = useRef({})
-  const valueRefs = useRef({})
-  const pairsRef = useRef([])
-  const setNameRef = (id) => (el) => { if (el) nameRefs.current[id] = el }
-  const setValueRef = (id) => (el) => { if (el) valueRefs.current[id] = el }
-
-  const matchedNames = useMemo(() => new Set(pairs.map((p) => p.nameId)), [pairs])
-  const matchedValues = useMemo(() => new Set(pairs.map((p) => p.valueId)), [pairs])
-
-  // Recompute EVERY connector line's endpoints from live DOM geometry. Called
-  // whenever pairs change and on any resize, so lines stay glued to their
-  // boxes no matter how the layout reflows.
-  const recompute = useCallback(() => {
-    const grid = gridRef.current
-    if (!grid) return
-    const gr = grid.getBoundingClientRect()
-    const next = {}
-    for (const p of pairsRef.current) {
-      const nameEl = nameRefs.current[p.nameId]
-      const valueEl = valueRefs.current[p.valueId]
-      if (!nameEl || !valueEl) continue
-      const nr = nameEl.getBoundingClientRect()
-      const vr = valueEl.getBoundingClientRect()
-      // Names sit in the RTL-first (right) column, values in the left column:
-      // line runs from the name box's LEFT edge to the value box's RIGHT edge.
-      next[`${p.nameId}|${p.valueId}`] = {
-        x1: nr.left  - gr.left,
-        y1: nr.top   - gr.top + nr.height / 2,
-        x2: vr.right - gr.left,
-        y2: vr.top   - gr.top + vr.height / 2,
-      }
-    }
-    setCoords(next)
-  }, [])
-
-  // Reset all state on question change.
   useEffect(() => {
-    setSelectedName(null); setPairs([]); setCoords({})
-    setSettled(new Set()); setWrongFlash(null); setWrongAttempts(0)
-    pairsRef.current = []
+    setSelectedName(null); setSelectedValue(null)
+    setMatched(new Set()); setWrongFlash(null); setWrongAttempts(0)
   }, [question.id])
 
-  // Recompute after any pairs change (layout effect → refs are positioned).
-  useLayoutEffect(() => {
-    pairsRef.current = pairs
-    recompute()
-  }, [pairs, recompute])
-
-  // Recompute on container resize + window resize (the whole point of the fix).
+  // Whenever both a name and value are selected, resolve the attempt.
   useEffect(() => {
-    const grid = gridRef.current
-    if (!grid || typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', recompute)
-      return () => window.removeEventListener('resize', recompute)
-    }
-    const ro = new ResizeObserver(() => recompute())
-    ro.observe(grid)
-    window.addEventListener('resize', recompute)
-    return () => { ro.disconnect(); window.removeEventListener('resize', recompute) }
-  }, [recompute])
-
-  // Completion → grade after the last line has drawn in.
-  useEffect(() => {
-    if (answered) return
-    if (names.length > 0 && pairs.length === names.length) {
-      const to = setTimeout(() => onAnswer(wrongAttempts === 0), 650)
-      return () => clearTimeout(to)
-    }
-  }, [pairs, names.length, answered, wrongAttempts])
-
-  const onPickName = (nameId) => {
-    if (answered || matchedNames.has(nameId)) return
-    setSelectedName((s) => (s === nameId ? null : nameId))
-  }
-
-  const onPickValue = (valueId) => {
-    if (answered || !selectedName) return
-    if (matchedValues.has(valueId) || matchedNames.has(selectedName)) return
-    if (selectedName === valueId) {
-      const pickedName = selectedName
-      const key = `${pickedName}|${valueId}`
-      setPairs((p) => [...p, { nameId: pickedName, valueId }])
-      // Mark the line settled once its draw-in animation completes, so future
-      // resizes just reposition it instead of re-animating.
-      setTimeout(() => setSettled((s) => new Set(s).add(key)), 600)
-      setSelectedName(null)
+    if (selectedName == null || selectedValue == null) return
+    if (selectedName === selectedValue) {
+      const id = selectedName
+      setMatched((m) => new Set(m).add(id))
+      setSelectedName(null); setSelectedValue(null)
       playChime()
     } else {
+      const flash = { nameId: selectedName, valueId: selectedValue }
+      setWrongFlash(flash)
       setWrongAttempts((w) => w + 1)
-      setWrongFlash({ nameId: selectedName, valueId })
-      setTimeout(() => setWrongFlash(null), 500)
-      setSelectedName(null)
+      const to = setTimeout(() => {
+        setWrongFlash(null); setSelectedName(null); setSelectedValue(null)
+      }, 520)
+      return () => clearTimeout(to)
+    }
+  }, [selectedName, selectedValue])
+
+  // Completion.
+  useEffect(() => {
+    if (answered) return
+    if (names.length > 0 && matched.size === names.length) {
+      const to = setTimeout(() => onAnswer(wrongAttempts === 0), 450)
+      return () => clearTimeout(to)
+    }
+  }, [matched, names.length, answered, wrongAttempts])
+
+  const tileCls = (state) => {
+    switch (state) {
+      case 'matched':  return 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)] opacity-60'
+      case 'wrong':    return 'bg-red-50 border-red-400 text-red-900 animate-feedback-shake'
+      case 'selected': return 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)] scale-[1.03] shadow-md'
+      default:         return 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold-soft)] active:scale-[0.98]'
     }
   }
+
+  const nameState = (id) =>
+    matched.has(id) ? 'matched'
+    : wrongFlash?.nameId === id ? 'wrong'
+    : selectedName === id ? 'selected'
+    : 'idle'
+
+  const valueState = (id) =>
+    matched.has(id) ? 'matched'
+    : wrongFlash?.valueId === id ? 'wrong'
+    : selectedValue === id ? 'selected'
+    : 'idle'
 
   return (
     <div dir="rtl">
@@ -446,57 +454,18 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         {t('practice.wp.hint')}
       </h3>
 
-      <div ref={gridRef} className="relative grid grid-cols-2 gap-3">
-        {/* Connector lines overlay — sits above the columns, ignores clicks */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{ zIndex: 5, overflow: 'visible' }}
-          aria-hidden="true"
-        >
-          {pairs.map((p) => {
-            const key = `${p.nameId}|${p.valueId}`
-            const c = coords[key]
-            if (!c) return null
-            const isSettled = settled.has(key)
-            const length = Math.hypot(c.x2 - c.x1, c.y2 - c.y1)
-            return (
-              <line
-                key={key}
-                x1={c.x1} y1={c.y1}
-                x2={c.x2} y2={c.y2}
-                stroke="var(--color-teal-deep)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                className={isSettled ? '' : 'animate-pair-line'}
-                style={isSettled ? undefined : { strokeDasharray: length, strokeDashoffset: length }}
-              />
-            )
-          })}
-        </svg>
-
+      <div className="grid grid-cols-2 gap-3">
         {/* Names column */}
-        <div className="space-y-2 relative" style={{ zIndex: 1 }}>
+        <div className="space-y-2.5">
           {names.map((n) => {
-            const isMatched = matchedNames.has(n.id)
-            const isSelected = selectedName === n.id
-            const isWrong = wrongFlash?.nameId === n.id
+            const state = nameState(n.id)
             return (
               <button
                 key={n.id}
-                ref={setNameRef(n.id)}
                 type="button"
-                onClick={() => onPickName(n.id)}
-                disabled={answered || isMatched}
-                className={
-                  'w-full py-3 px-2 rounded-xl font-serif text-base font-bold border-2 transition ' +
-                  (isMatched
-                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]'
-                    : isWrong
-                      ? 'bg-red-50 border-red-400 text-red-900'
-                      : isSelected
-                        ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)] scale-[1.02]'
-                        : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold-soft)]')
-                }
+                onClick={() => { if (!answered && state !== 'matched') setSelectedName((s) => (s === n.id ? null : n.id)) }}
+                disabled={answered || state === 'matched'}
+                className={'w-full py-3.5 px-2 rounded-2xl font-serif text-lg font-bold border-2 transition-all ' + tileCls(state)}
               >
                 {n.name}
               </button>
@@ -505,25 +474,16 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
         </div>
 
         {/* Values column */}
-        <div className="space-y-2 relative" style={{ zIndex: 1 }}>
+        <div className="space-y-2.5">
           {shuffledValues.map((v) => {
-            const isMatched = matchedValues.has(v.id)
-            const isWrong = wrongFlash?.valueId === v.id
+            const state = valueState(v.id)
             return (
               <button
                 key={v.id}
-                ref={setValueRef(v.id)}
                 type="button"
-                onClick={() => onPickValue(v.id)}
-                disabled={answered || isMatched}
-                className={
-                  'w-full py-3 px-3 rounded-xl text-xs sm:text-sm font-semibold border-2 transition text-start leading-snug ' +
-                  (isMatched
-                    ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]'
-                    : isWrong
-                      ? 'bg-red-50 border-red-400 text-red-900'
-                      : 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold-soft)]')
-                }
+                onClick={() => { if (!answered && state !== 'matched') setSelectedValue((s) => (s === v.id ? null : v.id)) }}
+                disabled={answered || state === 'matched'}
+                className={'w-full py-3.5 px-3 rounded-2xl text-xs sm:text-sm font-semibold border-2 transition-all text-start leading-snug ' + tileCls(state)}
               >
                 {v.text}
               </button>
@@ -533,7 +493,7 @@ function WPQuestion({ question, answered, wasCorrect, onAnswer, findName, lang, 
       </div>
 
       <div className="mt-3 text-[11px] text-[color:var(--color-ink-mute)] text-center" dir="ltr">
-        {pairs.length} / {names.length}
+        {matched.size} / {names.length}
         {wrongAttempts > 0 && ` · ${wrongAttempts} ✗`}
       </div>
     </div>

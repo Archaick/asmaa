@@ -85,6 +85,15 @@ export function useBouquetLessonProgress() {
 
   const isCompleted = useCallback((bouquetId) => !!byId[bouquetId]?.completed, [byId])
   const getStep = useCallback((bouquetId) => byId[bouquetId]?.step ?? 0, [byId])
+  // Best question score the student has achieved on this lesson, if any.
+  const getBest = useCallback(
+    (bouquetId) => {
+      const e = byId[bouquetId]
+      if (!e || e.bestTotal == null) return null
+      return { score: e.bestScore ?? 0, total: e.bestTotal }
+    },
+    [byId]
+  )
 
   const saveStep = useCallback(async (bouquetId, step) => {
     if (!user) return
@@ -95,20 +104,29 @@ export function useBouquetLessonProgress() {
     )
   }, [user])
 
-  const markCompleted = useCallback(async (bouquetId) => {
+  // Mark complete, recording the best score seen so far (never lowers it).
+  const markCompleted = useCallback(async (bouquetId, result) => {
     if (!user) return
-    await setDoc(
-      doc(db, 'users', user.uid, 'bouquetLessons', bouquetId),
-      { completed: true, completedAt: serverTimestamp(), updatedAt: serverTimestamp() },
-      { merge: true }
-    )
-  }, [user])
+    const payload = { completed: true, completedAt: serverTimestamp(), updatedAt: serverTimestamp() }
+    if (result && typeof result.total === 'number') {
+      const prev = byId[bouquetId]
+      const prevBest = prev?.bestTotal ? (prev.bestScore ?? 0) / prev.bestTotal : -1
+      const thisBest = result.total ? (result.score ?? 0) / result.total : 0
+      payload.lastScore = result.score ?? 0
+      payload.lastTotal = result.total
+      if (thisBest >= prevBest) {
+        payload.bestScore = result.score ?? 0
+        payload.bestTotal = result.total
+      }
+    }
+    await setDoc(doc(db, 'users', user.uid, 'bouquetLessons', bouquetId), payload, { merge: true })
+  }, [user, byId])
 
   const completedCount = useMemo(
     () => Object.values(byId).filter((e) => e.completed).length,
     [byId]
   )
 
-  return { byId, isCompleted, getStep, saveStep, markCompleted, completedCount, loading }
+  return { byId, isCompleted, getStep, getBest, saveStep, markCompleted, completedCount, loading }
 }
 

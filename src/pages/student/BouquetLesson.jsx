@@ -16,7 +16,7 @@ export default function BouquetLesson() {
   const navigate = useNavigate()
   const { t, lang } = useLang()
   const { lessons } = useBouquetLessons()
-  const { getStep, saveStep, markCompleted, isCompleted } = useBouquetLessonProgress()
+  const { getStep, saveStep, markCompleted } = useBouquetLessonProgress()
 
   const bouquet = BOUQUETS.find((b) => b.id === bouquetId)
   const lesson = lessons.find((l) => l.id === bouquetId)
@@ -29,6 +29,7 @@ export default function BouquetLesson() {
   const [step, setStep] = useState(0)
   const [celebrated, setCelebrated] = useState(false)
   const [restored, setRestored] = useState(false)
+  const [practiceResult, setPracticeResult] = useState(null) // { score, total }
 
   useEffect(() => {
     if (!bouquet || restored) return
@@ -48,10 +49,8 @@ export default function BouquetLesson() {
       setStep((s) => Math.min(closingIdx, s + 1))
       return
     }
-    if (!isCompleted(bouquetId)) {
-      playMilestoneChime()
-      markCompleted(bouquetId).catch(() => {})
-    }
+    playMilestoneChime()
+    markCompleted(bouquetId, practiceResult || undefined).catch(() => {})
     setCelebrated(true)
   }
 
@@ -131,7 +130,7 @@ export default function BouquetLesson() {
           {step === practiceIdx && (
             <QuestionRunner
               bouquetId={bouquet.id}
-              onComplete={() => setStep(closingIdx)}
+              onComplete={(result) => { setPracticeResult(result || null); setStep(closingIdx) }}
             />
           )}
           {step === closingIdx && (
