@@ -211,8 +211,8 @@ export const dict = {
     // Curriculum achievements
     'cmilestone.lesson-first.label': 'أول درس',
     'cmilestone.lesson-first.desc': 'أتممت أول درس في الدورة',
-    'cmilestone.lesson-three.label': 'ثلاثة دروس',
-    'cmilestone.lesson-three.desc': 'أتممت ثلاثة دروس',
+    'cmilestone.lesson-half.label': 'نصف الدورة',
+    'cmilestone.lesson-half.desc': 'أتممت نصف دروس الدورة',
     'cmilestone.lesson-perfect.label': 'علامة كاملة',
     'cmilestone.lesson-perfect.desc': 'أجبت كل أسئلة درسٍ إجابةً صحيحة',
     'cmilestone.lesson-all.label': 'أتممت الدورة',
@@ -575,8 +575,8 @@ export const dict = {
     // Curriculum achievements
     'cmilestone.lesson-first.label': 'First Lesson',
     'cmilestone.lesson-first.desc': 'You completed your first course lesson',
-    'cmilestone.lesson-three.label': 'Three Lessons',
-    'cmilestone.lesson-three.desc': 'You completed three lessons',
+    'cmilestone.lesson-half.label': 'Halfway There',
+    'cmilestone.lesson-half.desc': 'You completed half the course',
     'cmilestone.lesson-perfect.label': 'Perfect Score',
     'cmilestone.lesson-perfect.desc': 'You answered every question in a lesson correctly',
     'cmilestone.lesson-all.label': 'Course Complete',

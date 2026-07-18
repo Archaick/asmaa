@@ -13,7 +13,8 @@ export default function Achievements() {
   const { byId } = useBouquetLessonProgress()
   const { t } = useLang()
 
-  const { completedCount, perfectCount } = summarizeLessonProgress(byId)
+  const publishedIds = lessons.map((l) => l.id)
+  const { completedCount, perfectCount } = summarizeLessonProgress(byId, publishedIds)
   const totalLessons = lessons.length
   const cmilestones = computeCurriculumMilestones({ completedCount, totalLessons, perfectCount })
 
@@ -71,7 +72,7 @@ export default function Achievements() {
               unlocked={m.unlocked}
               label={t(`cmilestone.${m.id}.label`)}
               desc={t(`cmilestone.${m.id}.desc`)}
-              progress={progressForCurriculum(m, { completedCount, totalLessons })}
+              progress={m.target > 1 ? { current: m.current, target: m.target } : null}
               accent="teal"
               t={t}
             />
@@ -199,11 +200,3 @@ function progressForMilestone(m, { memorizedCount, streak, uniqueDays }) {
   }
 }
 
-function progressForCurriculum(m, { completedCount, totalLessons }) {
-  switch (m.id) {
-    case 'lesson-first': return { current: completedCount, target: 1 }
-    case 'lesson-three': return { current: completedCount, target: 3 }
-    case 'lesson-all':   return totalLessons ? { current: completedCount, target: totalLessons } : null
-    default:             return null
-  }
-}
