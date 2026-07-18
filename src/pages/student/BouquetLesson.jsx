@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import StudentLayout from '../../components/layout/StudentLayout'
 import CelebrationOverlay from '../../components/CelebrationOverlay'
 import { useLang } from '../../i18n/LangContext'
 import { useBouquetLessons, useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
+import { useAppConfig } from '../../hooks/useAppConfig'
+import { useProgress } from '../../hooks/useProgress'
+import { useMilestones } from '../../hooks/useMilestones'
 import { BOUQUETS, OPENING_HADITH, CLOSING_HADITH } from '../../data/bouquets'
 import { playMilestoneChime } from '../../utils/chime'
 import QuestionRunner from '../../components/questions/QuestionRunner'
@@ -17,6 +20,13 @@ export default function BouquetLesson() {
   const { t, lang } = useLang()
   const { lessons } = useBouquetLessons()
   const { getStep, saveStep, markCompleted } = useBouquetLessonProgress()
+
+  // Respect the curriculum gate on direct navigation to /lesson/:id.
+  const { config, loading: configLoading } = useAppConfig()
+  const { memorized, memorizedCount, entries } = useProgress()
+  const { milestones } = useMilestones(entries, memorized, memorizedCount)
+  const allUnlocked = milestones.length > 0 && milestones.every((m) => m.unlocked)
+  const locked = config.gateCurriculum && !allUnlocked
 
   const bouquet = BOUQUETS.find((b) => b.id === bouquetId)
   const lesson = lessons.find((l) => l.id === bouquetId)
@@ -62,6 +72,9 @@ export default function BouquetLesson() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [lang, step]) // eslint-disable-line
+
+  // Gate enforcement — bounce back to the (locked) curriculum landing.
+  if (!configLoading && locked) return <Navigate to="/curriculum" replace />
 
   if (!bouquet) {
     return (

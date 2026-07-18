@@ -203,6 +203,26 @@ export const dict = {
     'achievements.milestones_title': 'الإنجازات السبع',
     'achievements.milestones_intro': 'كل إنجاز مقصود — لا يُنال إلا بمداومة على الوِرد، وصبر على الحفظ، وحسن التعبد.',
     'achievements.unlocked': '✓ مُحقَّق',
+    'achievements.section.waseela': 'إنجازات الوسيلة',
+    'achievements.section.curriculum': 'إنجازات الدورة',
+    'achievements.stat.lessons': 'دروس مكتملة',
+    'achievements.stat.perfect': 'علامة كاملة',
+
+    // Curriculum achievements
+    'cmilestone.lesson-first.label': 'أول درس',
+    'cmilestone.lesson-first.desc': 'أتممت أول درس في الدورة',
+    'cmilestone.lesson-three.label': 'ثلاثة دروس',
+    'cmilestone.lesson-three.desc': 'أتممت ثلاثة دروس',
+    'cmilestone.lesson-perfect.label': 'علامة كاملة',
+    'cmilestone.lesson-perfect.desc': 'أجبت كل أسئلة درسٍ إجابةً صحيحة',
+    'cmilestone.lesson-all.label': 'أتممت الدورة',
+    'cmilestone.lesson-all.desc': 'أكملت كل دروس الدورة',
+
+    // Curriculum lock (gate)
+    'curriculum.locked.title': 'الدورة مقفلة',
+    'curriculum.locked.hint': 'اجمع كل إنجازات الوسيلة أولاً لتُفتح لك الدورة التعليمية.',
+    'curriculum.locked.progress': 'إنجازات الوسيلة',
+    'curriculum.locked.cta': 'واصل في الوسيلة',
 
     // Milestone labels + descriptions
     'milestone.first-name.label': 'أول اسم',
@@ -547,6 +567,26 @@ export const dict = {
     'achievements.milestones_title': 'The Seven Milestones',
     'achievements.milestones_intro': 'Each milestone is intentional — earned only through consistent wird, patience with memorization, and true worship.',
     'achievements.unlocked': '✓ Achieved',
+    'achievements.section.waseela': 'Method Achievements',
+    'achievements.section.curriculum': 'Course Achievements',
+    'achievements.stat.lessons': 'Lessons done',
+    'achievements.stat.perfect': 'Perfect scores',
+
+    // Curriculum achievements
+    'cmilestone.lesson-first.label': 'First Lesson',
+    'cmilestone.lesson-first.desc': 'You completed your first course lesson',
+    'cmilestone.lesson-three.label': 'Three Lessons',
+    'cmilestone.lesson-three.desc': 'You completed three lessons',
+    'cmilestone.lesson-perfect.label': 'Perfect Score',
+    'cmilestone.lesson-perfect.desc': 'You answered every question in a lesson correctly',
+    'cmilestone.lesson-all.label': 'Course Complete',
+    'cmilestone.lesson-all.desc': 'You finished every lesson in the course',
+
+    // Curriculum lock (gate)
+    'curriculum.locked.title': 'The Course is Locked',
+    'curriculum.locked.hint': 'Collect all the Method achievements first to unlock the course.',
+    'curriculum.locked.progress': 'Method achievements',
+    'curriculum.locked.cta': 'Continue the Method',
 
     // Milestone labels + descriptions
     'milestone.first-name.label': 'First Name',

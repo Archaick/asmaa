@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
 import { useBouquetLessons, saveBouquetLesson } from '../../hooks/useBouquetLessons'
+import { useAppConfig, saveAppConfig } from '../../hooks/useAppConfig'
 import { useNames } from '../../hooks/useNames'
 
 // New admin الدورات: fixed 9 bouquet lessons (one per bouquet in the sheikh's method).
@@ -12,9 +13,54 @@ import { useNames } from '../../hooks/useNames'
 export default function AdminCurriculum() {
   const { lessons, loading } = useBouquetLessons()
   const { byBouquet } = useNames()
+  const { config } = useAppConfig()
+  const [gateSaving, setGateSaving] = useState(false)
+
+  const toggleGate = async () => {
+    setGateSaving(true)
+    try { await saveAppConfig({ gateCurriculum: !config.gateCurriculum }) }
+    catch (e) { console.error(e) }
+    finally { setGateSaving(false) }
+  }
 
   return (
     <AdminLayout title="الدورات" subtitle="٩ دروس — درس لكل باقة">
+      {/* Curriculum gate control */}
+      <div className="mb-4 p-4 rounded-2xl bg-white border border-[color:var(--color-cream-deep)]">
+        <div className="flex items-center justify-between gap-3" dir="rtl">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="text-2xl shrink-0">{config.gateCurriculum ? '🔒' : '🔓'}</div>
+            <div className="min-w-0">
+              <div className="font-bold text-[color:var(--color-ink)]">قفل الدورة حتى إتمام إنجازات الوسيلة</div>
+              <div className="text-xs text-[color:var(--color-ink-soft)] mt-0.5 leading-relaxed">
+                {config.gateCurriculum
+                  ? 'الدورة مقفلة — لا تُفتح للطالب إلا بعد جمع كل إنجازات الوسيلة.'
+                  : 'الدورة مفتوحة للجميع. فعّل القفل لجعلها مكافأة على إتمام الوسيلة.'}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={toggleGate}
+            disabled={gateSaving}
+            role="switch"
+            aria-checked={config.gateCurriculum}
+            className={
+              'relative w-14 h-8 rounded-full transition shrink-0 disabled:opacity-60 ' +
+              (config.gateCurriculum ? 'bg-[color:var(--color-gold-deep)]' : 'bg-[color:var(--color-cream-deep)]')
+            }
+            aria-label="تبديل قفل الدورة"
+          >
+            <span
+              className={
+                'absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ' +
+                (config.gateCurriculum ? 'end-1' : 'end-7')
+              }
+            />
+          </button>
+        </div>
+      </div>
+
       <div className="mb-6 p-4 rounded-2xl bg-[color:var(--color-cream-warm)] border border-[color:var(--color-cream-deep)]">
         <div className="flex items-start gap-3">
           <div className="text-2xl shrink-0">📚</div>

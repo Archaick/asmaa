@@ -43,6 +43,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Global app config (e.g. curriculum gate). Everyone reads; admin writes.
+    match /config/{docId} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+    }
+
     // Bouquet lessons — 9 fixed docs, keyed by bouquetId.
     // Everyone signed-in reads (only published show up in student UI); only admin edits.
     match /bouquetLessons/{bouquetId} {

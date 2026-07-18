@@ -4,6 +4,9 @@ import { useLang } from '../../i18n/LangContext'
 import { useBouquetLessons, useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
 import { useAllBouquetsPublishedQuestionCounts } from '../../hooks/useBouquetQuestions'
 import { useNames } from '../../hooks/useNames'
+import { useProgress } from '../../hooks/useProgress'
+import { useMilestones } from '../../hooks/useMilestones'
+import { useAppConfig } from '../../hooks/useAppConfig'
 
 // Student view of الدورات: fixed 9-tile grid, one lesson per bouquet,
 // each following the sheikh's template (opening → 4-verb per name → practice → closing).
@@ -14,11 +17,20 @@ export default function Curriculum() {
   const { byBouquet } = useNames()
   const questionCounts = useAllBouquetsPublishedQuestionCounts()
 
+  // Gate: when enabled by admin, the whole section is locked until every
+  // الوسيلة achievement is unlocked.
+  const { config } = useAppConfig()
+  const { memorized, memorizedCount, entries } = useProgress()
+  const { milestones } = useMilestones(entries, memorized, memorizedCount)
+  const unlockedCount = milestones.filter((m) => m.unlocked).length
+  const allUnlocked = milestones.length > 0 && unlockedCount === milestones.length
+  const locked = config.gateCurriculum && !allUnlocked
+
   return (
     <StudentLayout>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🎓</div>
+          <div className="text-5xl mb-3">{locked ? '🔒' : '🎓'}</div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-[color:var(--color-ink)] mb-2">
             {t('curriculum.title')}
           </h1>
@@ -27,7 +39,9 @@ export default function Curriculum() {
           </p>
         </div>
 
-        {loading ? (
+        {locked ? (
+          <LockedState unlocked={unlockedCount} total={milestones.length} lang={lang} t={t} />
+        ) : loading ? (
           <div className="text-center text-[color:var(--color-ink-mute)]">…</div>
         ) : lessons.length === 0 ? (
           <EmptyState t={t} />
@@ -126,6 +140,44 @@ function EmptyState({ t }) {
       <div className="text-4xl mb-3">📖</div>
       <h3 className="font-bold text-[color:var(--color-ink)] mb-1">{t('curriculum.empty')}</h3>
       <p className="text-sm text-[color:var(--color-ink-soft)]">{t('curriculum.empty_hint')}</p>
+    </div>
+  )
+}
+
+function LockedState({ unlocked, total, lang, t }) {
+  const pct = total > 0 ? Math.round((unlocked / total) * 100) : 0
+  return (
+    <div className="max-w-lg mx-auto p-8 sm:p-10 rounded-3xl bg-white border-2 border-[color:var(--color-gold-soft)] text-center relative overflow-hidden">
+      <div className="absolute -top-12 -end-12 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-60"
+           style={{ background: 'var(--color-gold-soft)' }} />
+      <div className="relative">
+        <div className="text-6xl mb-4">🔒</div>
+        <h2 className="font-display text-2xl font-bold text-[color:var(--color-ink)] mb-2">
+          {t('curriculum.locked.title')}
+        </h2>
+        <p className="text-[color:var(--color-ink-soft)] leading-relaxed mb-6">
+          {t('curriculum.locked.hint')}
+        </p>
+
+        <div className="flex items-center justify-between text-sm font-bold text-[color:var(--color-ink-soft)] mb-1.5">
+          <span>{t('curriculum.locked.progress')}</span>
+          <span dir="ltr">{unlocked} / {total}</span>
+        </div>
+        <div className="h-2.5 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden mb-7">
+          <div
+            className="h-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-gold-soft), var(--color-gold))' }}
+          />
+        </div>
+
+        <Link
+          to="/memorize"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-base font-bold text-white shadow-md hover:shadow-lg active:scale-[0.97] transition-all"
+          style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
+        >
+          {t('curriculum.locked.cta')} {lang === 'ar' ? '←' : '→'}
+        </Link>
+      </div>
     </div>
   )
 }
