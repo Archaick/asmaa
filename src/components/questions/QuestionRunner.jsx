@@ -4,9 +4,12 @@ import { useNames } from '../../hooks/useNames'
 import { useLang } from '../../i18n/LangContext'
 import { playChime, playMilestoneChime } from '../../utils/chime'
 
-// How long the correct/wrong feedback lingers before auto-advancing.
-const ADVANCE_DELAY_CORRECT = 900
-const ADVANCE_DELAY_WRONG = 1900
+// How long the correct/wrong feedback modal lingers before auto-advancing.
+const ADVANCE_DELAY_CORRECT = 1200
+const ADVANCE_DELAY_WRONG = 2200
+
+const CHEER_KEYS = ['practice.cheer.a', 'practice.cheer.b', 'practice.cheer.c', 'practice.cheer.d']
+const TRYAGAIN_KEYS = ['practice.tryagain.a', 'practice.tryagain.b']
 
 // Duolingo-style practice block for a bouquet lesson.
 // - Reads published questions from /bouquetLessons/{id}/questions/*
@@ -146,54 +149,81 @@ export default function QuestionRunner({ bouquetId, onComplete }) {
 
       </div>
 
-      {/* Duolingo-style feedback modal — slides up from the bottom */}
+      {/* Duolingo-style feedback — a centered bubble that pops in the middle */}
       {answered && (
-        <FeedbackSheet correct={wasCorrect} onContinue={advance} t={t} />
+        <FeedbackModal correct={wasCorrect} onContinue={advance} t={t} />
       )}
     </div>
   )
 }
 
-// Bottom sheet that pops up on answer with a green/red result + effects.
-function FeedbackSheet({ correct, onContinue, t }) {
+// Centered celebratory bubble. Green pop + sparkles for correct, gentle red
+// shake for wrong — playful and encouraging for all ages.
+function FeedbackModal({ correct, onContinue, t }) {
+  const cheer = useMemo(() => {
+    const keys = correct ? CHEER_KEYS : TRYAGAIN_KEYS
+    return keys[Math.floor(Math.random() * keys.length)]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correct])
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[90] pointer-events-none">
+    <div
+      className="fixed inset-0 z-[95] flex items-center justify-center p-5"
+      onClick={onContinue}
+      dir="rtl"
+    >
+      <div className="absolute inset-0 bg-[color:var(--color-ink)]/35 backdrop-blur-sm animate-fade-swap" />
+
       <div
+        onClick={(e) => e.stopPropagation()}
         className={
-          'pointer-events-auto animate-feedback-up border-t-2 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] ' +
-          (correct
-            ? 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)]'
-            : 'bg-red-50 border-red-300')
+          'relative w-full max-w-xs text-center rounded-[2rem] border-2 shadow-2xl px-7 py-8 bg-white animate-celebrate-pop ' +
+          (correct ? 'border-[color:var(--color-teal)]' : 'border-red-300')
         }
       >
-        <div className="max-w-3xl mx-auto px-5 sm:px-7 py-4 flex items-center justify-between gap-4" dir="rtl">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={
-                'w-11 h-11 rounded-full flex items-center justify-center text-2xl shrink-0 text-white ' +
-                (correct ? 'animate-feedback-icon' : 'animate-feedback-shake')
-              }
-              style={{ background: correct ? 'var(--color-teal-deep)' : '#dc2626' }}
-            >
-              {correct ? '✓' : '✗'}
-            </div>
-            <div className="min-w-0">
-              <div className={'font-display text-lg font-bold ' + (correct ? 'text-[color:var(--color-teal-deep)]' : 'text-red-800')}>
-                {correct ? t('practice.feedback.correct') : t('practice.feedback.wrong')}
-              </div>
-            </div>
+        {/* sparkle burst on correct */}
+        {correct && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span
+                key={i}
+                className="absolute animate-sparkle text-lg"
+                style={{ '--r': `${(360 / 8) * i}deg`, animationDelay: `${(i % 4) * 60}ms`,
+                         color: i % 2 ? 'var(--color-gold)' : 'var(--color-teal)' }}
+              >
+                ✦
+              </span>
+            ))}
           </div>
-          <button
-            type="button"
-            onClick={onContinue}
-            className={
-              'shrink-0 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-sm active:scale-[0.96] transition ' +
-              (correct ? 'bg-[color:var(--color-teal-deep)] hover:bg-[color:var(--color-teal)]' : 'bg-red-600 hover:bg-red-700')
-            }
-          >
-            {t('practice.tap_continue')} ←
-          </button>
+        )}
+
+        <div
+          className={
+            'relative w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl text-white shadow-lg ' +
+            (correct ? 'animate-feedback-icon' : 'animate-feedback-shake')
+          }
+          style={{ background: correct ? 'var(--color-teal-deep)' : '#dc2626' }}
+        >
+          {correct ? '✓' : '✗'}
         </div>
+
+        <h3 className={'font-display text-2xl font-bold mb-1 ' + (correct ? 'text-[color:var(--color-teal-deep)]' : 'text-red-700')}>
+          {t(cheer)}
+        </h3>
+        <p className="text-sm text-[color:var(--color-ink-soft)] mb-6">
+          {correct ? t('practice.feedback.correct') : t('practice.feedback.wrong')}
+        </p>
+
+        <button
+          type="button"
+          onClick={onContinue}
+          className={
+            'w-full py-3.5 rounded-2xl text-base font-bold text-white shadow-md active:scale-[0.96] transition ' +
+            (correct ? 'bg-[color:var(--color-teal-deep)] hover:bg-[color:var(--color-teal)]' : 'bg-red-600 hover:bg-red-700')
+          }
+        >
+          {t('practice.tap_continue')} ←
+        </button>
       </div>
     </div>
   )
@@ -424,12 +454,16 @@ function WPQuestion({ question, answered, onAnswer, findName, lang, t }) {
     }
   }, [matched, names.length, answered, wrongAttempts])
 
+  // Stable pair number per name (1-based, order of the names list). Matched
+  // values reveal the same number so the pairing reads at a glance.
+  const numberOf = (id) => names.findIndex((n) => n.id === id) + 1
+
   const tileCls = (state) => {
     switch (state) {
-      case 'matched':  return 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)] opacity-60'
+      case 'matched':  return 'bg-[color:var(--color-teal-soft)] border-[color:var(--color-teal)] text-[color:var(--color-ink)]'
       case 'wrong':    return 'bg-red-50 border-red-400 text-red-900 animate-feedback-shake'
-      case 'selected': return 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)] scale-[1.03] shadow-md'
-      default:         return 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold-soft)] active:scale-[0.98]'
+      case 'selected': return 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)] scale-[1.03] shadow-md ring-2 ring-[color:var(--color-gold-soft)]'
+      default:         return 'bg-white border-[color:var(--color-cream-deep)] text-[color:var(--color-ink)] hover:border-[color:var(--color-gold)] hover:shadow-sm active:scale-[0.98]'
     }
   }
 
@@ -454,20 +488,22 @@ function WPQuestion({ question, answered, onAnswer, findName, lang, t }) {
         {t('practice.wp.hint')}
       </h3>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {/* Names column */}
         <div className="space-y-2.5">
           {names.map((n) => {
             const state = nameState(n.id)
+            const num = numberOf(n.id)
             return (
               <button
                 key={n.id}
                 type="button"
                 onClick={() => { if (!answered && state !== 'matched') setSelectedName((s) => (s === n.id ? null : n.id)) }}
                 disabled={answered || state === 'matched'}
-                className={'w-full py-3.5 px-2 rounded-2xl font-serif text-lg font-bold border-2 transition-all ' + tileCls(state)}
+                className={'group relative w-full flex items-center gap-2.5 py-3.5 pe-3 ps-2 rounded-2xl border-2 transition-all ' + tileCls(state)}
               >
-                {n.name}
+                <PairNumber n={num} state={state} />
+                <span className="flex-1 font-serif text-lg font-bold text-center">{n.name}</span>
               </button>
             )
           })}
@@ -483,20 +519,59 @@ function WPQuestion({ question, answered, onAnswer, findName, lang, t }) {
                 type="button"
                 onClick={() => { if (!answered && state !== 'matched') setSelectedValue((s) => (s === v.id ? null : v.id)) }}
                 disabled={answered || state === 'matched'}
-                className={'w-full py-3.5 px-3 rounded-2xl text-xs sm:text-sm font-semibold border-2 transition-all text-start leading-snug ' + tileCls(state)}
+                className={'group relative w-full flex items-center gap-2.5 py-3.5 pe-3 ps-2 rounded-2xl border-2 transition-all text-start ' + tileCls(state)}
               >
-                {v.text}
+                <PairNumber n={state === 'matched' ? numberOf(v.id) : null} state={state} />
+                <span className="flex-1 text-xs sm:text-sm font-semibold leading-snug">{v.text}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <div className="mt-3 text-[11px] text-[color:var(--color-ink-mute)] text-center" dir="ltr">
-        {matched.size} / {names.length}
-        {wrongAttempts > 0 && ` · ${wrongAttempts} ✗`}
+      <div className="mt-4 flex items-center justify-center gap-1.5">
+        {names.map((n) => (
+          <span
+            key={n.id}
+            className="w-2.5 h-2.5 rounded-full transition-all"
+            style={{ background: matched.has(n.id) ? 'var(--color-teal)' : 'var(--color-cream-deep)' }}
+          />
+        ))}
+        {wrongAttempts > 0 && (
+          <span className="ms-2 text-[11px] font-bold text-red-500" dir="ltr">{wrongAttempts} ✗</span>
+        )}
       </div>
     </div>
+  )
+}
+
+// The round number chip on a pairing tile. Shows the pair number, a check
+// when matched, or a hollow dot placeholder for an unmatched value tile.
+function PairNumber({ n, state }) {
+  const base = 'w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 border-2 transition-all'
+  if (state === 'matched') {
+    return (
+      <span className={base + ' bg-[color:var(--color-teal)] border-[color:var(--color-teal)] text-white'}>
+        {n != null ? n : '✓'}
+      </span>
+    )
+  }
+  if (n == null) {
+    // unmatched value tile — subtle placeholder dot
+    return <span className={base + ' border-dashed border-[color:var(--color-cream-deep)] text-[color:var(--color-ink-mute)]'} />
+  }
+  const selected = state === 'selected'
+  return (
+    <span
+      className={
+        base + ' ' +
+        (selected
+          ? 'bg-[color:var(--color-gold)] border-[color:var(--color-gold)] text-white'
+          : 'bg-[color:var(--color-cream-warm)] border-[color:var(--color-cream-deep)] text-[color:var(--color-ink-soft)]')
+      }
+    >
+      {n}
+    </span>
   )
 }
 
