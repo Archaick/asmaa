@@ -5,6 +5,7 @@ import { useProgress } from '../../hooks/useProgress'
 import { useMilestones } from '../../hooks/useMilestones'
 import { useBouquetLessonProgress } from '../../hooks/useBouquetLessons'
 import { useLang } from '../../i18n/LangContext'
+import LangToggle from '../LangToggle'
 import { TOTAL_NAMES } from '../../data/bouquets'
 import { playChime, isSoundEnabled, setSoundEnabled } from '../../utils/chime'
 
@@ -13,7 +14,7 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
   const { memorizedCount, entries, memorized } = useProgress()
   const { milestones, streak } = useMilestones(entries, memorized, memorizedCount)
   const { completedCount: lessonsCompleted } = useBouquetLessonProgress()
-  const { t, lang, toggle: toggleLang } = useLang()
+  const { t, lang } = useLang()
   const [sound, setSound] = useState(() => isSoundEnabled())
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
@@ -133,16 +134,10 @@ export default function StudentLayout({ children, showProgress = false, backTo, 
                       {sound ? t('student.header.sound_on_aria') : t('student.header.sound_off_aria')}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => { toggleLang(); setMenuOpen(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[color:var(--color-cream-warm)] text-start text-sm border-t border-[color:var(--color-cream-deep)]"
-                  >
+                  <div className="px-4 py-3 border-t border-[color:var(--color-cream-deep)] flex items-center gap-3">
                     <span className="text-lg w-6">🌐</span>
-                    <span className="flex-1 font-semibold text-[color:var(--color-ink)]">
-                      {t('nav.lang')}
-                    </span>
-                  </button>
+                    <LangToggle full className="flex-1" />
+                  </div>
 
                   {/* Sign out */}
                   <button

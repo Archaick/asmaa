@@ -90,6 +90,7 @@ export const dict = {
     'tour.s4.stat_total': '٩٩ اسمًا',
     'tour.s4.by': 'فكرة وإعداد: أيمن أبو طير',
     'tour.s4.cta': 'ابدأ الحفظ',
+    'tour.s4.done_badge': 'أتممت الجولة',
 
     // CTA
     'cta.title': 'اختر نقطة البداية',
@@ -460,6 +461,7 @@ export const dict = {
     'tour.s4.stat_total': '99 names',
     'tour.s4.by': 'Concept & design: Ayman Abu Tayr',
     'tour.s4.cta': 'Start memorizing',
+    'tour.s4.done_badge': 'Tour complete',
 
     // CTA
     'cta.title': 'Choose where to begin',

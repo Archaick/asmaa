@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useLang } from '../i18n/LangContext'
+import LangToggle from './LangToggle'
 
 export default function Header() {
-  const { t, lang, toggle } = useLang()
+  const { t, lang } = useLang()
   const [open, setOpen] = useState(false)
 
   const links = [
@@ -50,13 +51,7 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggle}
-            className="px-3 py-1.5 rounded-full text-sm font-semibold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] hover:text-[color:var(--color-gold-deep)] transition"
-          >
-            {t('nav.lang')}
-          </button>
+          <LangToggle />
           <a
             href="/login"
             className="hidden sm:inline-flex px-5 py-2 rounded-full text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition"

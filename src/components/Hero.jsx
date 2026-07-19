@@ -78,8 +78,10 @@ export default function Hero() {
             <button
               type="button"
               onClick={openTour}
-              className="hidden lg:inline-flex items-center gap-2 px-7 py-4 rounded-full text-lg font-semibold bg-transparent border-2 border-[color:var(--color-gold)] text-[color:var(--color-gold-deep)] hover:bg-[color:var(--color-gold-soft)]/50 transition"
+              className="group hidden lg:inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-lg font-bold text-[color:var(--color-ink)] border-2 border-[color:var(--color-gold)] transition-all shadow-sm hover:shadow-lg hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, var(--color-gold-soft), rgba(230,212,166,0.35))' }}
             >
+              <span className="text-xl transition-transform group-hover:rotate-12">✨</span>
               {t('hero.cta.secondary')}
             </button>
           </div>

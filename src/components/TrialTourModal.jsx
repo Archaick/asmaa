@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
-import { playChime } from '../utils/chime'
+import { playChime, playMilestoneChime } from '../utils/chime'
 
 const famousNames = [
   {
@@ -44,9 +45,12 @@ const TOTAL = 4
 
 export default function TrialTourModal({ open, onClose }) {
   const { t, lang } = useLang()
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [selectedName, setSelectedName] = useState(null)
   const [glowKey, setGlowKey] = useState(0)
+
+  const finish = () => { onClose?.(); navigate('/login') }
 
   useEffect(() => {
     if (open) {
@@ -59,10 +63,10 @@ export default function TrialTourModal({ open, onClose }) {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Play affirmation chime when the user reaches the final summary step
+  // Celebrate reaching the final summary step
   useEffect(() => {
     if (open && step === TOTAL - 1) {
-      playChime()
+      playMilestoneChime()
     }
   }, [open, step])
 
@@ -163,13 +167,23 @@ export default function TrialTourModal({ open, onClose }) {
                 {t('tour.back')}
               </button>
             )}
-            {step < TOTAL - 1 && (
+            {step < TOTAL - 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
                 className="px-5 py-2 rounded-full text-sm font-bold bg-[color:var(--color-ink)] text-[color:var(--color-cream)] hover:bg-[color:var(--color-teal-deep)] transition"
               >
                 {t('tour.next')} {lang === 'ar' ? '←' : '→'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={finish}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-white shadow-md hover:shadow-lg active:scale-[0.97] transition-all"
+                style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-deep))' }}
+              >
+                <span>✨</span>
+                {t('tour.s4.cta')} {lang === 'ar' ? '←' : '→'}
               </button>
             )}
           </div>
@@ -396,7 +410,11 @@ function StepClosing({ t, lang }) {
 function StepSummary({ t, lang, onClose }) {
   return (
     <div className="text-center animate-fade-in-up py-2">
-      <div className="text-3xl mb-2">✦</div>
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-sm font-bold animate-celebrate-pop"
+           style={{ background: 'linear-gradient(135deg, var(--color-gold-soft), var(--color-teal-soft))', color: 'var(--color-ink)' }}>
+        <span className="text-lg">🎉</span>
+        {t('tour.s4.done_badge')}
+      </div>
       <h3 className="font-display text-2xl sm:text-3xl font-bold text-[color:var(--color-ink)] mb-1">
         {t('tour.s4.title')}
       </h3>
