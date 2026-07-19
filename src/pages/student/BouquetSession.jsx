@@ -254,7 +254,8 @@ export default function BouquetSession() {
             </div>
           )}
 
-          {/* Big spacious names grid — staggered reveal after opening hadith */}
+          {/* Names grid — preserves the method's geometry: 5 names per row,
+              3 rows per bouquet. Kept 5-wide even on mobile (tighter tiles). */}
           <div key={`grid-${bouquetId}`} className={gridClassFor(bouquet)} dir="rtl">
             {names.map((n, i) => {
               const isMem = memorized.has(n.id)
@@ -264,7 +265,7 @@ export default function BouquetSession() {
                   type="button"
                   onClick={() => setOpenId(n.id)}
                   className={
-                    'relative min-w-0 rounded-2xl font-serif font-bold text-center transition-all border-2 px-1 py-5 sm:py-8 text-base sm:text-xl animate-fade-in-up ' +
+                    'relative min-w-0 rounded-xl sm:rounded-2xl font-serif font-bold text-center transition-all border-2 px-0.5 py-4 sm:py-8 text-[13px] sm:text-xl leading-tight animate-fade-in-up ' +
                     (isMem
                       ? (isGold
                           ? 'bg-[color:var(--color-gold-soft)] border-[color:var(--color-gold)] text-[color:var(--color-ink)]'
@@ -274,7 +275,7 @@ export default function BouquetSession() {
                   style={{ animationDelay: `${500 + i * 50}ms` }}
                 >
                   {n.name}
-                  {isMem && <span className="absolute top-1.5 end-2 text-sm">✓</span>}
+                  {isMem && <span className="absolute top-1 end-1 text-[11px]">✓</span>}
                 </button>
               )
             })}
@@ -318,8 +319,9 @@ export default function BouquetSession() {
 
 function gridClassFor(bouquet) {
   if (bouquet.isDua) return 'grid grid-cols-1 sm:grid-cols-2 gap-3'
-  if (bouquet.id === 'khitam') return 'grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3'
-  // famous + middle bouquets: 3 cols on mobile keeps names readable, 5 on sm+
-  return 'grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3'
+  if (bouquet.id === 'khitam') return 'grid grid-cols-4 gap-1.5 sm:gap-3'
+  // The core of the method: 5 names per row, 3 rows. Always 5 columns —
+  // including mobile — so the geometric shape is preserved.
+  return 'grid grid-cols-5 gap-1 sm:gap-3'
 }
 
