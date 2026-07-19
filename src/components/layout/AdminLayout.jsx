@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import LangToggle from '../LangToggle'
 
 const NAV = [
   { to: '/admin',            label: 'لوحة التحكم', icon: '🏠', end: true },
@@ -101,10 +102,11 @@ export default function AdminLayout({ title, subtitle, children }) {
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h1 className="font-display text-xl sm:text-2xl font-bold text-[color:var(--color-ink)] leading-tight">{title}</h1>
               {subtitle && <p className="text-sm text-[color:var(--color-ink-soft)]">{subtitle}</p>}
             </div>
+            <LangToggle className="shrink-0" />
           </div>
         </header>
 

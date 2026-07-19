@@ -3,9 +3,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import { useAuth } from '../context/AuthContext'
 import LoadingOverlay from '../components/LoadingOverlay'
+import LangToggle from '../components/LangToggle'
 
 export default function Login() {
-  const { t, lang, toggle } = useLang()
+  const { t, lang } = useLang()
   const { user, role, loading, signInGoogle, signInEmail } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -102,13 +103,7 @@ export default function Login() {
           </span>
         </Link>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggle}
-            className="px-3 py-1.5 rounded-full text-sm font-semibold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] hover:text-[color:var(--color-gold-deep)] transition"
-          >
-            {t('nav.lang')}
-          </button>
+          <LangToggle />
           <Link
             to="/"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-[color:var(--color-cream-deep)] hover:border-[color:var(--color-gold)] hover:bg-[color:var(--color-cream-warm)] transition"
