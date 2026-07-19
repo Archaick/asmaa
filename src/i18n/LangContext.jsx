@@ -2,10 +2,12 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { dict } from './dict'
 
 // Supported languages. Add an entry here (+ a dict.{code} block) to grow —
-// the LangToggle renders straight from this list.
+// the LangToggle renders straight from this list. `country` is the ISO code
+// used to pull a crisp SVG flag from country-flag-icons (renders identically
+// on every OS, unlike emoji flags which degrade on Windows).
 export const LANGUAGES = [
-  { code: 'ar', label: 'عربي',    flag: '🇸🇦', dir: 'rtl' },
-  { code: 'en', label: 'English', flag: '🇬🇧', dir: 'ltr' },
+  { code: 'ar', label: 'عربي',    country: 'SA', dir: 'rtl' },
+  { code: 'en', label: 'English', country: 'GB', dir: 'ltr' },
 ]
 
 const LANG_CODES = LANGUAGES.map((l) => l.code)

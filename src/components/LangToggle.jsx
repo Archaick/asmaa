@@ -1,4 +1,11 @@
+import SA from 'country-flag-icons/react/3x2/SA'
+import GB from 'country-flag-icons/react/3x2/GB'
 import { LANGUAGES, useLang } from '../i18n/LangContext'
+
+// Crisp SVG flags (country-flag-icons is tree-shaken — only the flags we
+// import here are bundled, ~1KB each, and they render identically on every
+// platform). To add a language: import its flag component and map it here.
+const FLAGS = { SA, GB }
 
 // Reusable segmented language switch with flags + endonyms. Renders every
 // entry in LANGUAGES, so adding a language anywhere grows this automatically.
@@ -18,6 +25,7 @@ export default function LangToggle({ full = false, className = '' }) {
     >
       {LANGUAGES.map((l) => {
         const active = lang === l.code
+        const Flag = FLAGS[l.country]
         return (
           <button
             key={l.code}
@@ -32,7 +40,12 @@ export default function LangToggle({ full = false, className = '' }) {
                 : 'text-[color:var(--color-ink-soft)] hover:text-[color:var(--color-ink)]')
             }
           >
-            <span className="text-base leading-none" aria-hidden="true">{l.flag}</span>
+            {Flag && (
+              <Flag
+                title={l.label}
+                className="w-5 h-auto rounded-[3px] shrink-0 ring-1 ring-black/5"
+              />
+            )}
             <span>{l.label}</span>
           </button>
         )
