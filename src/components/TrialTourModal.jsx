@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import { useNames } from '../hooks/useNames'
 import { BOUQUETS } from '../data/bouquets'
 import { playChime, playMilestoneChime } from '../utils/chime'
-
-const TOTAL = 4
 
 // Localize a name's field from the الاسماء database (admin-curated):
 // prefer the *En variant in English mode, fall back to Arabic.
@@ -15,6 +13,12 @@ function loc(name, field, lang) {
     if (en && en.trim()) return en
   }
   return name[field] || ''
+}
+
+function toDigits(n, lang) {
+  if (lang !== 'ar') return String(n)
+  const ar = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+  return String(n).split('').map((d) => ar[+d] ?? d).join('')
 }
 
 export default function TrialTourModal({ open, onClose }) {
@@ -27,6 +31,22 @@ export default function TrialTourModal({ open, onClose }) {
 
   const finish = () => { onClose?.(); navigate('/login') }
 
+  // The tour walks the whole وسيلة in order, giving each bouquet its own
+  // screen: opening hadith → famous 5 → the six bouquets → khitam →
+  // closing hadith → summary.
+  const steps = useMemo(() => {
+    const s = [{ type: 'opening', badge: t('tour.s1.badge') }]
+    for (const b of BOUQUETS) {
+      if (b.isDua) continue
+      s.push({ type: 'bouquet', bouquet: b, badge: b.title })
+    }
+    s.push({ type: 'closing', badge: t('tour.s3.badge') })
+    s.push({ type: 'summary', badge: t('tour.s4.badge') })
+    return s
+  }, [t])
+  const total = steps.length
+  const current = steps[Math.min(step, total - 1)]
+
   useEffect(() => {
     if (open) {
       setStep(0)
@@ -38,12 +58,11 @@ export default function TrialTourModal({ open, onClose }) {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Celebrate reaching the final summary step
+  // Fresh start on each screen; celebrate the summary.
+  useEffect(() => { setSelectedName(null) }, [step])
   useEffect(() => {
-    if (open && step === TOTAL - 1) {
-      playMilestoneChime()
-    }
-  }, [open, step])
+    if (open && step === total - 1) playMilestoneChime()
+  }, [open, step, total])
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -52,11 +71,6 @@ export default function TrialTourModal({ open, onClose }) {
   }, [open, onClose])
 
   if (!open) return null
-
-  const arDigits = ['١','٢','٣','٤']
-  const enDigits = ['1','2','3','4']
-  const stepNum = (lang === 'ar' ? arDigits : enDigits)[step]
-  const totalNum = lang === 'ar' ? '٤' : '4'
 
   const handleNameTap = (n) => {
     setSelectedName(n)
@@ -78,18 +92,18 @@ export default function TrialTourModal({ open, onClose }) {
 
         {/* Header */}
         <div className="relative flex items-center justify-between px-5 sm:px-7 py-4 border-b border-[color:var(--color-cream-deep)] bg-[color:var(--color-cream-warm)]">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
-              {stepNum} {t('tour.step')} {totalNum}
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="shrink-0 text-xs font-bold px-3 py-1 rounded-full bg-[color:var(--color-gold-soft)] text-[color:var(--color-gold-deep)]">
+              {toDigits(step + 1, lang)} {t('tour.step')} {toDigits(total, lang)}
             </span>
-            <span className="text-sm font-bold text-[color:var(--color-ink-soft)]">
-              {t(`tour.s${step + 1}.badge`)}
+            <span className="text-sm font-bold text-[color:var(--color-ink-soft)] truncate">
+              {current.badge}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-white/70 transition flex items-center justify-center text-[color:var(--color-ink-soft)]"
+            className="w-9 h-9 rounded-full hover:bg-white/70 transition flex items-center justify-center text-[color:var(--color-ink-soft)] shrink-0"
             aria-label={t('tour.close')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -100,39 +114,35 @@ export default function TrialTourModal({ open, onClose }) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-6">
-          {step === 0 && <StepOpening t={t} lang={lang} />}
-          {step === 1 && (
-            <StepNames
+          {current.type === 'opening' && <StepOpening t={t} lang={lang} />}
+          {current.type === 'bouquet' && (
+            <StepBouquet
               t={t}
               lang={lang}
-              byBouquet={byBouquet}
+              bouquet={current.bouquet}
+              names={byBouquet[current.bouquet.id] || []}
               selectedName={selectedName}
               onNameTap={handleNameTap}
               glowKey={glowKey}
             />
           )}
-          {step === 2 && <StepClosing t={t} lang={lang} />}
-          {step === 3 && <StepSummary t={t} lang={lang} onClose={onClose} />}
+          {current.type === 'closing' && <StepClosing t={t} lang={lang} />}
+          {current.type === 'summary' && <StepSummary t={t} lang={lang} onClose={onClose} />}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[color:var(--color-cream-deep)] px-5 sm:px-7 py-4 flex items-center justify-between gap-3 bg-white">
-          <div className="flex gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
-              <span
-                key={i}
-                className={
-                  'h-2 rounded-full transition-all ' +
-                  (i === step
-                    ? 'w-6 bg-[color:var(--color-gold)]'
-                    : i < step
-                      ? 'w-2 bg-[color:var(--color-gold-soft)]'
-                      : 'w-2 bg-[color:var(--color-cream-deep)]')
-                }
-              />
-            ))}
+        <div className="border-t border-[color:var(--color-cream-deep)] px-5 sm:px-7 py-3.5 bg-white">
+          {/* slim progress bar (dots would be too many with per-bouquet steps) */}
+          <div className="h-1.5 bg-[color:var(--color-cream-deep)] rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full transition-all duration-500"
+              style={{
+                width: `${((step + 1) / total) * 100}%`,
+                background: 'linear-gradient(90deg, var(--color-gold-soft), var(--color-gold))',
+              }}
+            />
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center justify-end gap-2">
             {step > 0 && (
               <button
                 type="button"
@@ -142,7 +152,7 @@ export default function TrialTourModal({ open, onClose }) {
                 {t('tour.back')}
               </button>
             )}
-            {step < TOTAL - 1 ? (
+            {step < total - 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
@@ -218,68 +228,38 @@ function StepOpening({ t, lang }) {
   )
 }
 
-// The real chart — every bouquet from the الاسماء database, every name
-// tappable. Same data the admin curates; edits flow in automatically.
-function ChartGrid({ byBouquet, selectedName, onNameTap }) {
-  const middle = BOUQUETS.slice(1, 7)
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-3" dir="rtl">
-      {middle.map((b, i) => (
-        <div
-          key={b.id}
-          className="animate-bouquet-bloom rounded-lg px-1.5 py-1.5 border"
-          style={{
-            animationDelay: `${i * 90}ms`,
-            borderColor: b.color === 'gold' ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
-            background: b.color === 'gold'
-              ? 'linear-gradient(135deg, rgba(230,212,166,0.45), rgba(230,212,166,0.15))'
-              : 'linear-gradient(135deg, rgba(185,212,216,0.5), rgba(185,212,216,0.2))',
-          }}
-        >
-          <div className="flex flex-wrap gap-0.5">
-            {(byBouquet[b.id] || []).map((n) => {
-              const active = selectedName?.id === n.id
-              return (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => onNameTap(n)}
-                  className={
-                    'text-[9px] leading-none px-1 py-1 rounded font-serif font-bold transition-all ' +
-                    (active
-                      ? 'bg-[color:var(--color-gold)] text-white scale-110 shadow'
-                      : 'bg-white/80 text-[color:var(--color-ink)] hover:bg-white hover:shadow-sm')
-                  }
-                >
-                  {n.name}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
+// One bouquet gets its own screen: title + its names as tappable tiles
+// (5-wide, the method's geometry; 4-wide for khitam), and a live detail
+// card from the الاسماء database when a name is tapped.
+function StepBouquet({ t, lang, bouquet, names, selectedName, onNameTap, glowKey }) {
+  const isGold = bouquet.color === 'gold'
+  const accent = isGold ? 'gold' : 'teal'
+  const cols = bouquet.id === 'khitam' ? 'grid-cols-4' : 'grid-cols-5'
 
-function StepNames({ t, lang, byBouquet, selectedName, onNameTap, glowKey }) {
-  const famous = byBouquet.famous || []
-  const khitam = byBouquet.khitam || []
   return (
     <div className="animate-fade-in-up">
       <div className="text-center mb-4">
+        <div
+          className="inline-block text-[10px] font-bold uppercase tracking-widest mb-2 px-3 py-0.5 rounded-full"
+          style={{
+            background: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
+            color: isGold ? 'var(--color-gold-deep)' : 'var(--color-teal-deep)',
+          }}
+        >
+          {t('bouquet.tag')}
+        </div>
         <h3 className="font-display text-2xl sm:text-3xl font-bold text-[color:var(--color-ink)] mb-1">
-          {t('tour.s2.title')}
+          {bouquet.title}
         </h3>
         <GoldFlourish />
         <p className="text-sm text-[color:var(--color-ink-soft)] mb-4">
-          {t('tour.s2.desc')}
+          {t('tour.bouquet.hint')}
         </p>
       </div>
 
-      {/* Famous 5 — big tappable tiles */}
-      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-3" dir="rtl">
-        {famous.map((n) => {
+      {/* Tappable name tiles */}
+      <div key={bouquet.id} className={`grid ${cols} gap-1.5 sm:gap-2 mb-5`} dir="rtl">
+        {names.map((n) => {
           const active = selectedName?.id === n.id
           return (
             <button
@@ -287,9 +267,11 @@ function StepNames({ t, lang, byBouquet, selectedName, onNameTap, glowKey }) {
               type="button"
               onClick={() => onNameTap(n)}
               className={
-                'relative min-w-0 py-3 sm:py-4 rounded-xl border-2 font-serif text-[13px] sm:text-base font-bold transition-all ' +
+                'relative min-w-0 py-3 sm:py-4 px-0.5 rounded-xl border-2 font-serif text-[13px] sm:text-base font-bold leading-tight transition-all ' +
                 (active
-                  ? 'border-[color:var(--color-gold)] bg-[color:var(--color-gold-soft)] scale-105 shadow-md'
+                  ? (isGold
+                      ? 'border-[color:var(--color-gold)] bg-[color:var(--color-gold-soft)] scale-105 shadow-md'
+                      : 'border-[color:var(--color-teal)] bg-[color:var(--color-teal-soft)] scale-105 shadow-md')
                   : 'border-[color:var(--color-cream-deep)] bg-white hover:border-[color:var(--color-gold)] hover:-translate-y-0.5')
               }
             >
@@ -299,37 +281,6 @@ function StepNames({ t, lang, byBouquet, selectedName, onNameTap, glowKey }) {
           )
         })}
       </div>
-
-      {/* The six bouquets — every name tappable, live from الاسماء */}
-      <ChartGrid byBouquet={byBouquet} selectedName={selectedName} onNameTap={onNameTap} />
-
-      {/* Khitam row */}
-      {khitam.length > 0 && (
-        <div className="grid grid-cols-4 gap-1.5 mb-3" dir="rtl">
-          {khitam.map((n) => {
-            const active = selectedName?.id === n.id
-            return (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => onNameTap(n)}
-                className={
-                  'min-w-0 py-2 rounded-lg border font-serif text-[11px] sm:text-sm font-bold transition-all ' +
-                  (active
-                    ? 'border-[color:var(--color-teal)] bg-[color:var(--color-teal-soft)] scale-105 shadow'
-                    : 'border-[color:var(--color-teal-soft)] bg-white hover:shadow-sm')
-                }
-              >
-                {n.name}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      <p className="text-center text-[11px] font-semibold text-[color:var(--color-ink-mute)] mb-5">
-        {t('tour.s2.chart_caption')}
-      </p>
 
       {!selectedName ? (
         <div className="text-center py-8 rounded-2xl bg-[color:var(--color-cream-warm)] border border-dashed border-[color:var(--color-cream-deep)]">
@@ -341,16 +292,17 @@ function StepNames({ t, lang, byBouquet, selectedName, onNameTap, glowKey }) {
       ) : (
         <div
           key={glowKey}
-          className="rounded-2xl bg-white border border-[color:var(--color-gold-soft)] p-5 shadow-sm animate-name-glow"
+          className="rounded-2xl bg-white border p-5 shadow-sm animate-name-glow"
+          style={{ borderColor: isGold ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)' }}
           dir="rtl"
         >
           <h4 className="font-serif text-3xl font-bold text-center text-[color:var(--color-ink)] mb-4">
             {selectedName.name}
           </h4>
 
-          <NameFacet icon="💡" label={t('tour.s2.meaning')} text={loc(selectedName, 'meaning', lang)} accent="gold" />
-          <NameFacet icon="🌟" label={t('tour.s2.thanaa')}  text={loc(selectedName, 'thanaa',  lang)} accent="teal" />
-          <NameFacet icon="🤲" label={t('tour.s2.talab')}   text={loc(selectedName, 'talab',   lang)} accent="gold" last />
+          <NameFacet icon="💡" label={t('tour.s2.meaning')} text={loc(selectedName, 'meaning', lang)} accent={accent} />
+          <NameFacet icon="🌟" label={t('tour.s2.thanaa')}  text={loc(selectedName, 'thanaa',  lang)} accent={accent === 'gold' ? 'teal' : 'gold'} />
+          <NameFacet icon="🤲" label={t('tour.s2.talab')}   text={loc(selectedName, 'talab',   lang)} accent={accent} last />
         </div>
       )}
     </div>
