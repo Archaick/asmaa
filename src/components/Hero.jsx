@@ -3,12 +3,17 @@ import { Link } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import ChartMockup from './ChartMockup'
 import TrialTourModal from './TrialTourModal'
+import FullWaseelaModal from './FullWaseelaModal'
 
 export default function Hero() {
   const { t, lang } = useLang()
   const [tourOpen, setTourOpen] = useState(false)
+  const [chartOpen, setChartOpen] = useState(false)
 
-  const openTour = () => setTourOpen(true)
+  // شاهد الوسيلة → the full continuous chart; the guided tour is one tap
+  // away from inside it.
+  const openTour = () => setChartOpen(true)
+  const switchToTour = () => { setChartOpen(false); setTourOpen(true) }
 
   return (
     <section className="relative overflow-hidden">
@@ -105,6 +110,7 @@ export default function Hero() {
         </div>
       </div>
 
+      <FullWaseelaModal open={chartOpen} onClose={() => setChartOpen(false)} onOpenTour={switchToTour} />
       <TrialTourModal open={tourOpen} onClose={() => setTourOpen(false)} />
     </section>
   )

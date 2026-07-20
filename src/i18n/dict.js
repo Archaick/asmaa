@@ -54,6 +54,11 @@ export const dict = {
     'mock.popup.title': 'تمّ الحفظ',
     'mock.popup.desc': 'السلام ✨',
 
+    // Full وسيلة review modal
+    'waseela.full.title': 'الوسيلة كاملة',
+    'waseela.full.hint': 'الافتتاح ← الباقات متتالية ← الختام',
+    'waseela.full.tour_cta': 'جولة تعريفية تفاعلية',
+
     // Trial tour modal
     'tour.mobile_cta': 'شاهد الوسيلة',
     'tour.close': 'إغلاق',
@@ -424,6 +429,11 @@ export const dict = {
     'mock.progress': 'Progress',
     'mock.popup.title': 'Memorized',
     'mock.popup.desc': 'As-Salam ✨',
+
+    // Full وسيلة review modal
+    'waseela.full.title': 'The Complete Method',
+    'waseela.full.hint': 'Opening → the bouquets in sequence → closing',
+    'waseela.full.tour_cta': 'Interactive tour',
 
     // Trial tour modal
     'tour.mobile_cta': 'See the method',
