@@ -1,50 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
+import { useNames } from '../hooks/useNames'
+import { BOUQUETS } from '../data/bouquets'
 import { playChime, playMilestoneChime } from '../utils/chime'
-
-const famousNames = [
-  {
-    id: 'allah',
-    name: 'الله',
-    meaning: { ar: 'لفظ الجلالة الأعظم، المسمّى بجميع أسمائه الحسنى وصفاته العلى.', en: 'The Supreme Name — the One called by every beautiful name and lofty attribute.' },
-    thanaa:  { ar: 'سبحان الله وبحمده، سبحان الله العظيم.', en: 'Glory be to Allah and praise Him, glory be to Allah the Almighty.' },
-    talab:   { ar: 'اللهم لك الحمد كله، ولك الملك كله، وإليك يرجع الأمر كله.', en: 'O Allah, all praise is Yours, all sovereignty is Yours, and to You all matters return.' },
-  },
-  {
-    id: 'rahman',
-    name: 'الرَّحمن',
-    meaning: { ar: 'ذو الرحمة الواسعة التي وسعت كل شيء.', en: 'The Most Merciful — whose mercy encompasses everything.' },
-    thanaa:  { ar: 'سبحان الرحمن الذي وسعت رحمته كل شيء.', en: 'Glory be to Ar-Rahman, whose mercy encompasses all things.' },
-    talab:   { ar: 'يا رحمن، ارحمني برحمتك التي وسعت كل شيء.', en: 'O Ar-Rahman, have mercy on me by Your mercy which encompasses all things.' },
-  },
-  {
-    id: 'raheem',
-    name: 'الرَّحيم',
-    meaning: { ar: 'العطوف على عباده المؤمنين برحمة خاصة.', en: 'The Especially Merciful — bestowing special mercy on His believing servants.' },
-    thanaa:  { ar: 'سبحان الرحيم، أرحم الراحمين.', en: 'Glory be to Ar-Raheem, the Most Merciful of the merciful.' },
-    talab:   { ar: 'يا رحيم، ارحمني واغفر لي وتولّني برحمتك.', en: 'O Ar-Raheem, have mercy on me, forgive me, and take charge of me by Your mercy.' },
-  },
-  {
-    id: 'hayy',
-    name: 'الحيّ',
-    meaning: { ar: 'ذو الحياة الكاملة الأبدية التي لا تسبقها عدم ولا يلحقها فناء.', en: 'The Ever-Living — with perfect eternal life, preceded by no non-existence and followed by no perishing.' },
-    thanaa:  { ar: 'سبحان الحيّ الذي لا يموت.', en: 'Glory be to Al-Hayy — the Living who does not die.' },
-    talab:   { ar: 'يا حيّ يا قيّوم برحمتك أستغيث، أصلح لي شأني كلّه.', en: 'O Al-Hayy, O Al-Qayyum, by Your mercy I seek help — set right all my affairs.' },
-  },
-  {
-    id: 'qayyum',
-    name: 'القيّوم',
-    meaning: { ar: 'القائم بنفسه، المقيم لغيره — قامت به كل الموجودات.', en: 'The Self-Subsisting Sustainer — established in Himself, sustaining all that exists.' },
-    thanaa:  { ar: 'سبحان القيّوم الذي قامت به السماوات والأرض.', en: 'Glory be to Al-Qayyum by whom the heavens and earth stand.' },
-    talab:   { ar: 'يا قيّوم، اكفني بحفظك، وتولَّ أمري في يومي كلّه.', en: 'O Al-Qayyum, suffice me by Your protection, and take charge of my day.' },
-  },
-]
 
 const TOTAL = 4
 
+// Localize a name's field from the الاسماء database (admin-curated):
+// prefer the *En variant in English mode, fall back to Arabic.
+function loc(name, field, lang) {
+  if (lang === 'en') {
+    const en = name[field + 'En']
+    if (en && en.trim()) return en
+  }
+  return name[field] || ''
+}
+
 export default function TrialTourModal({ open, onClose }) {
   const { t, lang } = useLang()
+  const { byBouquet } = useNames()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [selectedName, setSelectedName] = useState(null)
@@ -130,7 +105,7 @@ export default function TrialTourModal({ open, onClose }) {
             <StepNames
               t={t}
               lang={lang}
-              names={famousNames}
+              byBouquet={byBouquet}
               selectedName={selectedName}
               onNameTap={handleNameTap}
               glowKey={glowKey}
@@ -243,22 +218,16 @@ function StepOpening({ t, lang }) {
   )
 }
 
-function MiniChart() {
-  // 6 bouquets, alternating gold/teal, each blooms in sequence
-  const bouquets = [
-    { color: 'gold', names: ['الأول','الآخر','الظاهر','الباطن','السميع'] },
-    { color: 'teal', names: ['البصير','القدوس','السلام','المؤمن','المهيمن'] },
-    { color: 'gold', names: ['العزيز','الجبار','المتكبر','الخالق','البارئ'] },
-    { color: 'teal', names: ['المصور','الوهاب','الرزاق','الفتاح','العليم'] },
-    { color: 'gold', names: ['القابض','الباسط','الخافض','الرافع','المعز'] },
-    { color: 'teal', names: ['المذل','الحكم','العدل','اللطيف','الخبير'] },
-  ]
+// The real chart — every bouquet from the الاسماء database, every name
+// tappable. Same data the admin curates; edits flow in automatically.
+function ChartGrid({ byBouquet, selectedName, onNameTap }) {
+  const middle = BOUQUETS.slice(1, 7)
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-3">
-      {bouquets.map((b, i) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-3" dir="rtl">
+      {middle.map((b, i) => (
         <div
-          key={i}
-          className="animate-bouquet-bloom rounded-lg px-2 py-2 border"
+          key={b.id}
+          className="animate-bouquet-bloom rounded-lg px-1.5 py-1.5 border"
           style={{
             animationDelay: `${i * 90}ms`,
             borderColor: b.color === 'gold' ? 'var(--color-gold-soft)' : 'var(--color-teal-soft)',
@@ -268,14 +237,24 @@ function MiniChart() {
           }}
         >
           <div className="flex flex-wrap gap-0.5">
-            {b.names.map((n, j) => (
-              <div key={j}
-                   className="text-[7px] leading-none px-1 py-0.5 rounded-sm bg-white/70 font-serif font-bold text-[color:var(--color-ink)]"
-                   style={{ opacity: 0.9 }}
-              >
-                {n}
-              </div>
-            ))}
+            {(byBouquet[b.id] || []).map((n) => {
+              const active = selectedName?.id === n.id
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => onNameTap(n)}
+                  className={
+                    'text-[9px] leading-none px-1 py-1 rounded font-serif font-bold transition-all ' +
+                    (active
+                      ? 'bg-[color:var(--color-gold)] text-white scale-110 shadow'
+                      : 'bg-white/80 text-[color:var(--color-ink)] hover:bg-white hover:shadow-sm')
+                  }
+                >
+                  {n.name}
+                </button>
+              )
+            })}
           </div>
         </div>
       ))}
@@ -283,7 +262,9 @@ function MiniChart() {
   )
 }
 
-function StepNames({ t, lang, names, selectedName, onNameTap, glowKey }) {
+function StepNames({ t, lang, byBouquet, selectedName, onNameTap, glowKey }) {
+  const famous = byBouquet.famous || []
+  const khitam = byBouquet.khitam || []
   return (
     <div className="animate-fade-in-up">
       <div className="text-center mb-4">
@@ -296,15 +277,9 @@ function StepNames({ t, lang, names, selectedName, onNameTap, glowKey }) {
         </p>
       </div>
 
-      {/* Mini chart preview */}
-      <MiniChart />
-      <p className="text-center text-[11px] font-semibold text-[color:var(--color-ink-mute)] mb-5">
-        {t('tour.s2.chart_caption')}
-      </p>
-
-      {/* Interactive famous names */}
-      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-5" dir="rtl">
-        {names.map((n) => {
+      {/* Famous 5 — big tappable tiles */}
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-3" dir="rtl">
+        {famous.map((n) => {
           const active = selectedName?.id === n.id
           return (
             <button
@@ -312,7 +287,7 @@ function StepNames({ t, lang, names, selectedName, onNameTap, glowKey }) {
               type="button"
               onClick={() => onNameTap(n)}
               className={
-                'relative py-3 sm:py-4 rounded-xl border-2 font-serif text-sm sm:text-base font-bold transition-all ' +
+                'relative min-w-0 py-3 sm:py-4 rounded-xl border-2 font-serif text-[13px] sm:text-base font-bold transition-all ' +
                 (active
                   ? 'border-[color:var(--color-gold)] bg-[color:var(--color-gold-soft)] scale-105 shadow-md'
                   : 'border-[color:var(--color-cream-deep)] bg-white hover:border-[color:var(--color-gold)] hover:-translate-y-0.5')
@@ -324,6 +299,37 @@ function StepNames({ t, lang, names, selectedName, onNameTap, glowKey }) {
           )
         })}
       </div>
+
+      {/* The six bouquets — every name tappable, live from الاسماء */}
+      <ChartGrid byBouquet={byBouquet} selectedName={selectedName} onNameTap={onNameTap} />
+
+      {/* Khitam row */}
+      {khitam.length > 0 && (
+        <div className="grid grid-cols-4 gap-1.5 mb-3" dir="rtl">
+          {khitam.map((n) => {
+            const active = selectedName?.id === n.id
+            return (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => onNameTap(n)}
+                className={
+                  'min-w-0 py-2 rounded-lg border font-serif text-[11px] sm:text-sm font-bold transition-all ' +
+                  (active
+                    ? 'border-[color:var(--color-teal)] bg-[color:var(--color-teal-soft)] scale-105 shadow'
+                    : 'border-[color:var(--color-teal-soft)] bg-white hover:shadow-sm')
+                }
+              >
+                {n.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <p className="text-center text-[11px] font-semibold text-[color:var(--color-ink-mute)] mb-5">
+        {t('tour.s2.chart_caption')}
+      </p>
 
       {!selectedName ? (
         <div className="text-center py-8 rounded-2xl bg-[color:var(--color-cream-warm)] border border-dashed border-[color:var(--color-cream-deep)]">
@@ -342,25 +348,9 @@ function StepNames({ t, lang, names, selectedName, onNameTap, glowKey }) {
             {selectedName.name}
           </h4>
 
-          <NameFacet
-            icon="💡"
-            label={t('tour.s2.meaning')}
-            text={selectedName.meaning[lang] || selectedName.meaning.ar}
-            accent="gold"
-          />
-          <NameFacet
-            icon="🌟"
-            label={t('tour.s2.thanaa')}
-            text={selectedName.thanaa[lang] || selectedName.thanaa.ar}
-            accent="teal"
-          />
-          <NameFacet
-            icon="🤲"
-            label={t('tour.s2.talab')}
-            text={selectedName.talab[lang] || selectedName.talab.ar}
-            accent="gold"
-            last
-          />
+          <NameFacet icon="💡" label={t('tour.s2.meaning')} text={loc(selectedName, 'meaning', lang)} accent="gold" />
+          <NameFacet icon="🌟" label={t('tour.s2.thanaa')}  text={loc(selectedName, 'thanaa',  lang)} accent="teal" />
+          <NameFacet icon="🤲" label={t('tour.s2.talab')}   text={loc(selectedName, 'talab',   lang)} accent="gold" last />
         </div>
       )}
     </div>
